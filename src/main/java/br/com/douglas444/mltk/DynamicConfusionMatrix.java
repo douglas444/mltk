@@ -142,9 +142,13 @@ public class DynamicConfusionMatrix {
         for (int i = 0; i < matrix.length; ++i) {
             for (int j = 0; j < matrix[0].length; ++j) {
                 if (i == 0 && j == 0) {
-                    stringBuilder.append(String.format(" %6s", ""));
+                    stringBuilder.append(String.format("   %6s", ""));
+                } else if (i == 0 && j >= knownPredictedLabelsCount) {
+                    stringBuilder.append(String.format("|PN%6d", matrix[i][j]));
+                } else if (i == 0 || j == 0){
+                    stringBuilder.append(String.format("|C %6d", matrix[i][j]));
                 } else {
-                    stringBuilder.append(String.format("|%6d", matrix[i][j]));
+                    stringBuilder.append(String.format("|  %6d", matrix[i][j]));
                 }
             }
             stringBuilder.append("|\n");

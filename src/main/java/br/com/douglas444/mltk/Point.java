@@ -7,15 +7,15 @@ public class Point {
 
     private int t;
     private double[] x;
-    private double y;
+    private int y;
 
-    public Point(int t, double[] x, double y) {
+    public Point(int t, double[] x, int y) {
         this.t = t;
         this.x = x;
         this.y = y;
     }
 
-    public Point(double[] x, double y) {
+    public Point(double[] x, int y) {
         this.x = x;
         this.y = y;
     }
@@ -120,11 +120,11 @@ public class Point {
         this.x = x;
     }
 
-    public double getY() {
+    public int getY() {
         return y;
     }
 
-    public void setY(double y) {
+    public void setY(int y) {
         this.y = y;
     }
 

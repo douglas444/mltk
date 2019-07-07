@@ -4,7 +4,6 @@ import java.util.List;
 
 public class Cluster {
 
-    private String category;
     private List<Point> points;
 
     public Cluster(List<Point> points) {
@@ -42,6 +41,10 @@ public class Cluster {
         return Math.sqrt(sum / this.points.size());
     }
 
+    public int getSize() {
+        return points.size();
+    }
+
     public List<Point> getPoints() {
         return points;
     }
@@ -50,11 +53,4 @@ public class Cluster {
         this.points = points;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
 }

@@ -4,24 +4,24 @@ import java.util.List;
 
 public class Cluster {
 
-    private List<Point> points;
+    private List<Sample> samples;
 
-    public Cluster(List<Point> points) {
-        this.points = points;
+    public Cluster(List<Sample> samples) {
+        this.samples = samples;
     }
 
     /** Calculates center of the cluster.
      *
      * @return the center os the cluster.
      */
-    public Point calculateCenter() {
+    public Sample calculateCenter() {
 
-        Point center = null;
+        Sample center = null;
 
-        if (this.points.size() > 0) {
-            center = this.points.get(0).copy();
-            this.points.subList(1, this.points.size()).forEach(center::sum);
-            center.divide(this.points.size());
+        if (this.samples.size() > 0) {
+            center = this.samples.get(0).copy();
+            this.samples.subList(1, this.samples.size()).forEach(center::sum);
+            center.divide(this.samples.size());
         }
 
         return center;
@@ -30,27 +30,27 @@ public class Cluster {
 
     public double calculateStandardDeviation() {
 
-        Point center = this.calculateCenter();
+        Sample center = this.calculateCenter();
 
         double sum = this
-                .points
+                .samples
                 .stream()
-                .mapToDouble(point -> Math.pow(point.distance(center), 2))
+                .mapToDouble(sample -> Math.pow(sample.distance(center), 2))
                 .sum();
 
-        return Math.sqrt(sum / this.points.size());
+        return Math.sqrt(sum / this.samples.size());
     }
 
     public int getSize() {
-        return points.size();
+        return samples.size();
     }
 
-    public List<Point> getPoints() {
-        return points;
+    public List<Sample> getSamples() {
+        return samples;
     }
 
-    public void setPoints(List<Point> points) {
-        this.points = points;
+    public void setSamples(List<Sample> samples) {
+        this.samples = samples;
     }
 
 }

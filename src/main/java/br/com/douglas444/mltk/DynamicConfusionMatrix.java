@@ -5,87 +5,93 @@ import java.util.stream.Collectors;
 
 public class DynamicConfusionMatrix {
 
-    private int knownPredictedLabelsCount;
-    private int novelPredictedLabelsCount;
-    private int actualLabelsCount;
-    private int predictedLabelsCount;
+    private Set<Integer> lineLabels;
+    private Set<Integer> columnLabels;
 
-    private HashMap<Integer, Integer> actualLabelEnumByActualLabel;
+    //Number of columns
+    private int knownColumnsCount;
+    private int novelColumnsCount;
 
-    private HashMap<Integer, Integer> knownPredictedLabelEnumByPredictedLabel;
-    private HashMap<Integer, Integer> novelPredictedLabelEnumByPredictedLabel;
+    //Indices for matrix access
+    private HashMap<Integer, Integer> knownColumnIndexByLabel;
+    private HashMap<Integer, Integer> novelColumnIndexByLabel;
+    private HashMap<Integer, Integer> lineIndexByLabel;
 
-    private HashMap<Integer, List<Integer>> predictionsAsKnownByActualLabelEnum;
-    private HashMap<Integer, List<Integer>> predictionsAsNovelByActualLabelEnum;
+    //Matrix
+    private List<List<Integer>> knownColumnsMatrix;
+    private List<List<Integer>> novelColumnsMatrix;
 
     public DynamicConfusionMatrix(List<Integer> knownLabels) {
 
-        this.actualLabelsCount = 0;
-        this.predictedLabelsCount = 0;
-        this.actualLabelEnumByActualLabel = new HashMap<>();
+        this.lineLabels = new HashSet<>();
+        this.columnLabels = new HashSet<>();
 
-        this.knownPredictedLabelEnumByPredictedLabel = new HashMap<>();
-        this.novelPredictedLabelEnumByPredictedLabel = new HashMap<>();
+        this.knownColumnsCount = 0;
+        this.novelColumnsCount = 0;
 
-        this.knownPredictedLabelsCount = knownLabels.size();
-        this.novelPredictedLabelsCount = 0;
+        this.knownColumnIndexByLabel = new HashMap<>();
+        this.novelColumnIndexByLabel = new HashMap<>();
+        this.lineIndexByLabel = new HashMap<>();
 
-        this.predictionsAsKnownByActualLabelEnum = new HashMap<>();
-        this.predictionsAsNovelByActualLabelEnum = new HashMap<>();
+        this.knownColumnsMatrix = new ArrayList<>();
+        this.novelColumnsMatrix = new ArrayList<>();
 
-        knownLabels.forEach(label -> {
+        knownLabels.forEach(this::addKnownColumn);
+        knownLabels.forEach(this::addLine);
+    }
 
-            actualLabelEnumByActualLabel.put(label, actualLabelsCount);
-            knownPredictedLabelEnumByPredictedLabel.put(label, predictedLabelsCount);
+    private void addLine(Integer label) {
 
-            ++actualLabelsCount;
-            ++predictedLabelsCount;
-
-            this.predictionsAsKnownByActualLabelEnum.put(actualLabelEnumByActualLabel.get(label),
-                    new ArrayList<>(Collections.nCopies(knownLabels.size(), 0)));
-
-            this.predictionsAsNovelByActualLabelEnum.put(actualLabelEnumByActualLabel.get(label), new ArrayList<>());
-
-        });
-
+        this.lineLabels.add(label);
+        this.lineIndexByLabel.put(label, lineLabels.size());
+        this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
+        this.novelColumnsMatrix.add(new ArrayList<>(Collections.nCopies(novelColumnsCount, 0)));
 
     }
 
-    public void add(int actualLabel, int predictedLabel, boolean isNovel) {
+    private void addKnownColumn(Integer label) {
+
+        this.columnLabels.add(label);
+        this.knownColumnIndexByLabel.put(label, this.knownColumnsCount++);
+        this.knownColumnsMatrix.forEach(line -> line.add(0));
+
+    }
+
+    private void addNovelColumn(Integer label) {
+
+        this.columnLabels.add(label);
+        this.novelColumnIndexByLabel.put(label, this.novelColumnsCount++);
+        this.novelColumnsMatrix.forEach(line -> line.add(0));
+
+    }
+
+    public void addPrediction(int realLabel, int predictedLabel) {
 
 
-        if (actualLabelEnumByActualLabel.get(actualLabel) == null) {
+        if (!this.lineLabels.contains(realLabel)) {
 
-            actualLabelEnumByActualLabel.put(actualLabel, actualLabelsCount);
-            predictionsAsKnownByActualLabelEnum.put(actualLabelsCount,
-                    new ArrayList<>(Collections.nCopies(knownPredictedLabelsCount, 0)));
-            predictionsAsNovelByActualLabelEnum.put(actualLabelsCount,
-                    new ArrayList<>(Collections.nCopies(novelPredictedLabelsCount, 0)));
-            ++actualLabelsCount;
+            this.addLine(realLabel);
+
         }
 
-        if (isNovel && novelPredictedLabelEnumByPredictedLabel.get(predictedLabel) == null) {
-
-            novelPredictedLabelEnumByPredictedLabel.put(predictedLabel, novelPredictedLabelsCount);
-            predictionsAsNovelByActualLabelEnum.forEach((key, value) -> value.add(0));
-            ++predictedLabelsCount;
-            ++novelPredictedLabelsCount;
+        if (!this.columnLabels.contains(predictedLabel)) {
+            this.addNovelColumn(predictedLabel);
         }
 
-        int actualLabelEnum = actualLabelEnumByActualLabel.get(actualLabel);
+        int lineIndex = this.lineIndexByLabel.get(realLabel);
 
-        if (isNovel) {
+        if (!this.lineLabels.contains(predictedLabel)) {
 
-            int predictedLabelEnum = novelPredictedLabelEnumByPredictedLabel.get(predictedLabel);
-            int count = predictionsAsNovelByActualLabelEnum.get(actualLabelEnum).get(predictedLabelEnum);
-            predictionsAsNovelByActualLabelEnum.get(actualLabelEnum).set(predictedLabelEnum, count + 1);
+            int columnIndex = this.novelColumnIndexByLabel.get(predictedLabel);
+            int count = this.novelColumnsMatrix.get(lineIndex).get(columnIndex);
+            this.novelColumnsMatrix.get(lineIndex).set(columnIndex, count + 1);
 
         } else {
 
 
-            int predictedLabelEnum = knownPredictedLabelEnumByPredictedLabel.get(predictedLabel);
-            int count = predictionsAsKnownByActualLabelEnum.get(actualLabelEnum).get(predictedLabelEnum);
-            predictionsAsKnownByActualLabelEnum.get(actualLabelEnum).set(predictedLabelEnum, count + 1);
+            int columnIndex = this.knownColumnIndexByLabel.get(predictedLabel);
+            int count = this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
+            this.knownColumnsMatrix.get(lineIndex).set(columnIndex, count + 1);
 
         }
 
@@ -94,66 +100,53 @@ public class DynamicConfusionMatrix {
     @Override
     public String toString() {
 
-        int[][] matrix = new int[actualLabelsCount + 1][predictedLabelsCount + 1];
+        int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 1];
 
-        List<Integer> predictedLabels = knownPredictedLabelEnumByPredictedLabel
-                .keySet()
-                .stream()
+        List<Integer> sortedColumnLabels = this.columnLabels.stream()
                 .sorted()
                 .collect(Collectors.toList());
 
-        predictedLabels.addAll(novelPredictedLabelEnumByPredictedLabel
-                .keySet()
-                .stream()
-                .sorted()
-                .collect(Collectors.toList()));
-
-        List<Integer> actualLabels = actualLabelEnumByActualLabel
-                .keySet()
-                .stream()
+        List<Integer> sortedLineLabels = this.lineLabels.stream()
                 .sorted()
                 .collect(Collectors.toList());
 
-        for (int i = 0; i < knownPredictedLabelsCount; ++i) {
-            matrix[0][i + 1] = predictedLabels.get(i);
+        for (int i = 0; i < this.knownColumnsCount; ++i) {
+            matrix[0][i + 1] = sortedColumnLabels.get(i);
         }
 
-        for (int i = 0; i < actualLabels.size(); ++i) {
-            matrix[i + 1][0] = actualLabels.get(i);
+        for (int i = this.knownColumnsCount; i < sortedColumnLabels.size(); ++i) {
+            matrix[0][i + 1] = sortedColumnLabels.get(i);
+        }
+
+        for (int i = 0; i < sortedLineLabels.size(); ++i) {
+            matrix[i + 1][0] = sortedLineLabels.get(i);
         }
 
 
-        for (int i = knownPredictedLabelsCount; i < predictedLabels.size(); ++i) {
-            matrix[0][i + 1] = predictedLabels.get(i);
-        }
+        for (int i = 0; i < this.lineLabels.size(); ++i) {
+            for (int j = 0; j < this.knownColumnsCount; ++j) {
 
+                int line = sortedLineLabels.get(i);
+                int column = sortedColumnLabels.get(j);
 
-        for (int i = 0; i < actualLabelsCount; ++i) {
-            for (int j = 0; j < knownPredictedLabelsCount; ++j) {
+                int lineIndex = this.lineIndexByLabel.get(line);
+                int columnIndex = this.knownColumnIndexByLabel.get(column);
 
-                int actualLabel = actualLabels.get(i);
-                int predictedLabel = predictedLabels.get(j);
-
-                int actualLabelEnum = actualLabelEnumByActualLabel.get(actualLabel);
-
-
-                int predictedLabelEnum = knownPredictedLabelEnumByPredictedLabel.get(predictedLabel);
-
-                matrix[i + 1][j + 1] = predictionsAsKnownByActualLabelEnum.get(actualLabelEnum).get(predictedLabelEnum);
+                matrix[i + 1][j + 1] = this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
             }
         }
 
-        for (int i = 0; i < actualLabelsCount; ++i) {
-            for (int j = knownPredictedLabelsCount; j < novelPredictedLabelsCount; ++j) {
+        for (int i = 0; i < this.lineLabels.size(); ++i) {
+            for (int j = this.knownColumnsCount; j < this.novelColumnsCount; ++j) {
 
-                int actualLabel = actualLabels.get(i);
-                int predictedLabel = predictedLabels.get(j);
+                int actualLabel = sortedLineLabels.get(i);
+                int predictedLabel = sortedColumnLabels.get(j);
 
-                int actualLabelEnum = actualLabelEnumByActualLabel.get(actualLabel);
-                int predictedLabelEnum = novelPredictedLabelEnumByPredictedLabel.get(predictedLabel);
+                int actualLabelEnum = this.lineIndexByLabel.get(actualLabel);
+                int predictedLabelEnum = this.novelColumnIndexByLabel.get(predictedLabel);
 
-                matrix[i + 1][j + knownPredictedLabelsCount + 1] =
-                        predictionsAsNovelByActualLabelEnum.get(actualLabelEnum).get(predictedLabelEnum);
+                matrix[i + 1][j + this.knownColumnsCount + 1] =
+                        this.novelColumnsMatrix.get(actualLabelEnum).get(predictedLabelEnum);
             }
 
         }
@@ -163,7 +156,7 @@ public class DynamicConfusionMatrix {
             for (int j = 0; j < matrix[0].length; ++j) {
                 if (i == 0 && j == 0) {
                     stringBuilder.append(String.format("   %6s", ""));
-                } else if (i == 0 && j > knownPredictedLabelsCount) {
+                } else if (i == 0 && j > this.knownColumnsCount) {
                     stringBuilder.append(String.format("|PN%6d", matrix[i][j]));
                 } else if (i == 0 || j == 0){
                     stringBuilder.append(String.format("|C %6d", matrix[i][j]));

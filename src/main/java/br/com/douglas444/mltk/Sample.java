@@ -3,19 +3,19 @@ package br.com.douglas444.mltk;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class Point {
+public class Sample {
 
     private int t;
     private double[] x;
     private int y;
 
-    public Point(int t, double[] x, int y) {
+    public Sample(int t, double[] x, int y) {
         this.t = t;
         this.x = x;
         this.y = y;
     }
 
-    public Point(double[] x, int y) {
+    public Sample(double[] x, int y) {
         this.x = x;
         this.y = y;
     }
@@ -27,54 +27,54 @@ public class Point {
         return result;
     }
 
-    /** Calculates the distance of this point to another.
+    /** Calculates the distance of this sample to another.
      *
-     * @param point the point to which the distance will be calculated.
+     * @param sample the sample to which the distance will be calculated.
      * @return the calculated distance.
      */
-    public double distance(Point point) {
+    public double distance(Sample sample) {
         double sum = 0;
-        for (int i = 0; i < point.getX().length; ++i) {
-            sum += (point.getX()[i] - this.getX()[i]) * (point.getX()[i] - this.getX()[i]);
+        for (int i = 0; i < sample.getX().length; ++i) {
+            sum += (sample.getX()[i] - this.getX()[i]) * (sample.getX()[i] - this.getX()[i]);
         }
         return Math.sqrt(sum);
     }
 
-    /** Indicates whether the coordinates x and y of some other point is
+    /** Indicates whether the coordinates x and y of some other sample is
      * "equal to" this one.
      *
      * @param o the reference to the object to be compared
-     * @return true if the coordinates x and y are the same as the point
+     * @return true if the coordinates x and y are the same as the sample
      * passed as argument; false otherwise or if the object passed isn't
-     * a instance of br.com.douglas444.common.Point class
+     * a instance of br.com.douglas444.common.Sample class
      */
     @Override
     public boolean equals(Object o) {
 
-        if (o.getClass() != Point.class) {
+        if (o.getClass() != Sample.class) {
             return false;
         }
 
-        Point point = (Point) o;
+        Sample sample = (Sample) o;
 
-        for (int i = 0; i < point.getX().length; ++i) {
-            if (point.getX()[i] != this.x[i]) {
+        for (int i = 0; i < sample.getX().length; ++i) {
+            if (sample.getX()[i] != this.x[i]) {
                 return false;
             }
         }
 
-        return point.getY() == this.y;
+        return sample.getY() == this.y;
 
     }
 
-    /** Sum coordinates x of another point to this one. Coordinate y keeps the same.
+    /** Sum coordinates x of another sample to this one. Coordinate y keeps the same.
      *
-     * @param point the point to be added.
+     * @param sample the sample to be added.
      */
-    public void sum(Point point) {
+    public void sum(Sample sample) {
 
         for (int i = 0; i < x.length; ++i) {
-            x[i] += point.getX()[i];
+            x[i] += sample.getX()[i];
         }
 
     }
@@ -90,17 +90,17 @@ public class Point {
         }
 
     }
-    /** Return a copy of the point, with no reference between then.
+    /** Return a copy of the sample, with no reference between then.
      *
-     * @return a copy of the point.
+     * @return a copy of the sample.
      */
-    public Point copy() {
+    public Sample copy() {
 
-        Point point = new Point(new double[x.length], y);
+        Sample sample = new Sample(new double[x.length], y);
         for (int i = 0; i < x.length; ++i) {
-            point.getX()[i] = x[i];
+            sample.getX()[i] = x[i];
         }
-        return point;
+        return sample;
 
     }
 

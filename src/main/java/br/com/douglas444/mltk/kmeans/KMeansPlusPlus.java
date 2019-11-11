@@ -1,37 +1,37 @@
 package br.com.douglas444.mltk.kmeans;
 
 import br.com.douglas444.mltk.Cluster;
-import br.com.douglas444.mltk.Point;
+import br.com.douglas444.mltk.Sample;
 
 import java.util.*;
 
 public class KMeansPlusPlus {
 
-    private List<Point> points;
+    private List<Sample> samples;
     private List<Cluster> clusters;
 
-    public KMeansPlusPlus(List<Point> points, int k) {
+    public KMeansPlusPlus(List<Sample> samples, int k) {
 
-        this.points = points;
+        this.samples = samples;
 
-        Set<Point> centers = chooseCenters(points, k);
-        this.clusters = groupByClosestCenter(points, centers);
+        Set<Sample> centers = chooseCenters(samples, k);
+        this.clusters = groupByClosestCenter(samples, centers);
 
     }
 
     /** Chooses the initials centers.
      *
-     * @param points points set.
+     * @param samples samples set.
      * @param k number of centers.
      * @return a list of centers.
      */
-    private static Set<Point> chooseCenters(List<Point> points, int k) {
+    private static Set<Sample> chooseCenters(List<Sample> samples, int k) {
 
-        Set<Point> centers = new HashSet<>();
+        Set<Sample> centers = new HashSet<>();
 
         for (int i = 0; i < k; ++i) {
-            Point center = randomSelectNextCenter(points, centers);
-            //points.remove(center);
+            Sample center = randomSelectNextCenter(samples, centers);
+            //samples.remove(center);
             centers.add(center);
         }
 
@@ -39,26 +39,26 @@ public class KMeansPlusPlus {
 
     }
 
-    /** Selects the next center in a set of points.
+    /** Selects the next center in a set of samples.
      *
-     * @param points list with the candidates points.
+     * @param samples list with the candidates samples.
      * @param centers the list containing the current centers.
      * @return the next center.
      */
-    private static Point randomSelectNextCenter(List<Point> points, Set<Point> centers) {
+    private static Sample randomSelectNextCenter(List<Sample> samples, Set<Sample> centers) {
 
         Random generator = new Random();
 
         double roulette = 1;
-        HashMap<Point, Double> probabilityByPoint = mapProbabilityByPoint(points, centers);
+        HashMap<Sample, Double> probabilityBySample = mapProbabilityBySample(samples, centers);
 
-        List<Map.Entry<Point, Double>> entries = new ArrayList<>(probabilityByPoint.entrySet());
-        Iterator<Map.Entry<Point, Double>> iterator = entries.iterator();
-        Point selectedCenter = iterator.next().getKey();
+        List<Map.Entry<Sample, Double>> entries = new ArrayList<>(probabilityBySample.entrySet());
+        Iterator<Map.Entry<Sample, Double>> iterator = entries.iterator();
+        Sample selectedCenter = iterator.next().getKey();
 
         while (iterator.hasNext()) {
 
-            Map.Entry<Point, Double> entry = iterator.next();
+            Map.Entry<Sample, Double> entry = iterator.next();
             double r = generator.nextDouble() * roulette;
             if (r <= entry.getValue()) {
                 selectedCenter = entry.getKey();
@@ -72,38 +72,38 @@ public class KMeansPlusPlus {
 
     }
 
-    /** Calculates the probability of each point of be select as the next center.
+    /** Calculates the probability of each sample of be select as the next center.
      *
-     * @param points list with the candidates points.
+     * @param samples list with the candidates samples.
      * @param centers the list containing the current centers.
-     * @return a map of probability by point.
+     * @return a map of probability by sample.
      */
-    private static HashMap<Point, Double> mapProbabilityByPoint(List<Point> points, Set<Point> centers) {
+    private static HashMap<Sample, Double> mapProbabilityBySample(List<Sample> samples, Set<Sample> centers) {
 
-        HashMap<Point, Double> probabilityByPoint = new HashMap<>();
-        points.forEach(point -> {
-            probabilityByPoint.put(point, distanceToTheClosestCenter(point, centers));
+        HashMap<Sample, Double> probabilityBySample = new HashMap<>();
+        samples.forEach(sample -> {
+            probabilityBySample.put(sample, distanceToTheClosestCenter(sample, centers));
         });
 
-        double sum = probabilityByPoint.values().stream().mapToDouble(Double::doubleValue).sum();
-        probabilityByPoint.values().forEach(probability -> probability /= sum);
+        double sum = probabilityBySample.values().stream().mapToDouble(Double::doubleValue).sum();
+        probabilityBySample.values().forEach(probability -> probability /= sum);
 
-        return probabilityByPoint;
+        return probabilityBySample;
 
     }
 
-    /** Calculates de distance of a point to the closest center.
+    /** Calculates de distance of a sample to the closest center.
      *
-     * @param point the target point.
+     * @param sample the target sample.
      * @param centers the list containing the centers.
-     * @return the distance of the point to the closest center.
+     * @return the distance of the sample to the closest center.
      */
-    private static double distanceToTheClosestCenter(Point point, Set<Point> centers) {
+    private static double distanceToTheClosestCenter(Sample sample, Set<Sample> centers) {
 
-        Point closestCenter = getClosestCenter(point, centers);
+        Sample closestCenter = getClosestCenter(sample, centers);
 
         if (closestCenter != null) {
-            return point.distance(closestCenter);
+            return sample.distance(closestCenter);
         } else {
             return 0;
         }
@@ -112,42 +112,42 @@ public class KMeansPlusPlus {
 
     /** Calculates the closest center.
      *
-     * @param point the target point.
+     * @param sample the target sample.
      * @param centers the list containing the centers.
      * @return the closest center.
      */
-    private static Point getClosestCenter(Point point, Set<Point> centers) {
+    private static Sample getClosestCenter(Sample sample, Set<Sample> centers) {
 
         return centers
                 .stream()
-                .min(Comparator.comparing(center -> center.distance(point)))
+                .min(Comparator.comparing(center -> center.distance(sample)))
                 .orElse(null);
 
     }
 
-    /** Generates a list of clusters, grouping a list of point by the closest center.
+    /** Generates a list of clusters, grouping a list of sample by the closest center.
      *
-     * @param points points to be grouped.
+     * @param samples samples to be grouped.
      * @param centers the list containing the centers.
      * @return a list of clusters.
      */
-    private static List<Cluster> groupByClosestCenter(List<Point> points, Set<Point> centers) {
+    private static List<Cluster> groupByClosestCenter(List<Sample> samples, Set<Sample> centers) {
 
-        HashMap<Point, List<Point>> pointsByCenter = new HashMap<>();
+        HashMap<Sample, List<Sample>> samplesByCenter = new HashMap<>();
 
         centers.forEach(center -> {
-            pointsByCenter.put(center, new ArrayList<>());
+            samplesByCenter.put(center, new ArrayList<>());
         });
 
-        points.forEach(point -> {
-            Point closestCenter = getClosestCenter(point, centers);
+        samples.forEach(sample -> {
+            Sample closestCenter = getClosestCenter(sample, centers);
             if (closestCenter != null) {
-                pointsByCenter.get(closestCenter).add(point);
+                samplesByCenter.get(closestCenter).add(sample);
             }
         });
 
         List<Cluster> clusters = new ArrayList<>();
-        pointsByCenter.forEach((key, value) -> {
+        samplesByCenter.forEach((key, value) -> {
             if (value.size() > 0) {
                 clusters.add(new Cluster(value));
             }
@@ -156,15 +156,15 @@ public class KMeansPlusPlus {
 
     }
 
-    /** Calculates de center of the current clusters and regroup the points
+    /** Calculates de center of the current clusters and regroup the samples
      * using the new centers. Repeat the process until the centers dont change.
      *
      * @return a list of clusters.
      */
     public List<Cluster> fit() {
 
-        Set<Point> newCenters = new HashSet<>();
-        Set<Point> oldCenters;
+        Set<Sample> newCenters = new HashSet<>();
+        Set<Sample> oldCenters;
 
         do {
 
@@ -175,7 +175,7 @@ public class KMeansPlusPlus {
                 newCenters.add(cluster.calculateCenter());
             }
 
-            clusters = groupByClosestCenter(points, newCenters);
+            clusters = groupByClosestCenter(samples, newCenters);
 
         } while(!oldCenters.containsAll(newCenters));
 

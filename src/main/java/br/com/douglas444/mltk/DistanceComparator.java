@@ -2,23 +2,23 @@ package br.com.douglas444.mltk;
 
 import java.util.Comparator;
 
-public class DistanceComparator implements Comparator<Point> {
+public class DistanceComparator implements Comparator<Sample> {
 
-    private Point target;
+    private Sample target;
 
-    public DistanceComparator(Point target) {
+    public DistanceComparator(Sample target) {
         this.target = target;
     }
 
-    /** Compares the distances of the two points passed as argument to the
-     * the target point defined as a class attribute.
+    /** Compares the distances of the two samples passed as argument to the
+     * the target sample defined as a class attribute.
      *
      * @return Returns 0 if p1 and p2 have the same distance to the target
-     * point, -1 if p1 are closer to the target point and returns 1 if p1
-     * are closer to the target point.
+     * sample, -1 if p1 are closer to the target sample and returns 1 if p1
+     * are closer to the target sample.
      */
     @Override
-    public int compare(Point p1, Point p2) {
+    public int compare(Sample p1, Sample p2) {
 
         double d1 = p1.distance(this.target);
         double d2 = p2.distance(this.target);
@@ -26,11 +26,11 @@ public class DistanceComparator implements Comparator<Point> {
         return Double.compare(d1, d2);
     }
 
-    public Point getTarget() {
+    public Sample getTarget() {
         return target;
     }
 
-    public void setTarget(Point target) {
+    public void setTarget(Sample target) {
         this.target = target;
     }
 

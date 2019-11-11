@@ -42,8 +42,8 @@ public class DynamicConfusionMatrix {
 
     private void addLine(Integer label) {
 
-        this.lineLabels.add(label);
         this.lineIndexByLabel.put(label, lineLabels.size());
+        this.lineLabels.add(label);
         this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
         this.novelColumnsMatrix.add(new ArrayList<>(Collections.nCopies(novelColumnsCount, 0)));
 

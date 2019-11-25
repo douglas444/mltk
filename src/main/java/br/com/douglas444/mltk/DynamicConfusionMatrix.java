@@ -21,6 +21,7 @@ public class DynamicConfusionMatrix {
     //Matrix
     private List<List<Integer>> knownColumnsMatrix;
     private List<List<Integer>> novelColumnsMatrix;
+    private List<Integer> unkownColumn;
 
     public DynamicConfusionMatrix(List<Integer> knownLabels) {
 
@@ -37,6 +38,7 @@ public class DynamicConfusionMatrix {
 
         this.knownColumnsMatrix = new ArrayList<>();
         this.novelColumnsMatrix = new ArrayList<>();
+        this.unkownColumn = new ArrayList<>();
 
         knownLabels.forEach(this::addKnownColumn);
         knownLabels.forEach(this::addLine);
@@ -48,6 +50,7 @@ public class DynamicConfusionMatrix {
         this.lineLabels.add(label);
         this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
         this.novelColumnsMatrix.add(new ArrayList<>(Collections.nCopies(novelColumnsCount, 0)));
+        this.unkownColumn.add(0);
 
     }
 
@@ -64,6 +67,36 @@ public class DynamicConfusionMatrix {
         this.novelColumnLabels.add(label);
         this.novelColumnIndexByLabel.put(label, this.novelColumnsCount++);
         this.novelColumnsMatrix.forEach(line -> line.add(0));
+
+    }
+
+    public void updatedDelayed(int realLabel, int predictedLabel, boolean isNovel) {
+
+        if (!this.lineLabels.contains(realLabel)) {
+
+            throw new RuntimeException("Invalid value for parameter realLabel");
+
+        }
+
+        int lineIndex = this.lineIndexByLabel.get(realLabel);
+        int value = this.unkownColumn.get(lineIndex);
+        this.unkownColumn.set(lineIndex, value - 1);
+
+        this.addPrediction(realLabel, predictedLabel, isNovel);
+
+    }
+
+    public void addUnknown(int realLabel) {
+
+        if (!this.lineLabels.contains(realLabel)) {
+
+            this.addLine(realLabel);
+
+        }
+
+        int lineIndex = this.lineIndexByLabel.get(realLabel);
+        int value = this.unkownColumn.get(lineIndex);
+        this.unkownColumn.set(lineIndex, value + 1);
 
     }
 
@@ -101,7 +134,7 @@ public class DynamicConfusionMatrix {
     @Override
     public String toString() {
 
-        int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 1];
+        int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 2];
 
         List<Integer> sortedKnownColumnLabels = this.knownColumnLabels.stream()
                 .sorted()
@@ -141,6 +174,10 @@ public class DynamicConfusionMatrix {
             }
         }
 
+        for (int i = 0; i < this.unkownColumn.size(); ++i) {
+            matrix[i][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unkownColumn.get(i);
+        }
+
         for (int i = 0; i < this.lineLabels.size(); ++i) {
             for (int j = 0; j < this.novelColumnsCount; ++j) {
 
@@ -161,8 +198,10 @@ public class DynamicConfusionMatrix {
             for (int j = 0; j < matrix[0].length; ++j) {
                 if (i == 0 && j == 0) {
                     stringBuilder.append(String.format("   %6s", ""));
-                } else if (i == 0 && j > this.knownColumnsCount) {
+                } else if (i == 0 && j > this.knownColumnsCount && j < this.knownColumnsCount + this.novelColumnsCount + 1) {
                     stringBuilder.append(String.format("|PN%6d", this.novelColumnIndexByLabel.get(matrix[i][j])));
+                } else if (i == 0 && j > this.knownColumnsCount) {
+                    stringBuilder.append(String.format("|%1sUNKNOWN", ""));
                 } else if (j == 0 && i > this.knownColumnsCount){
                     stringBuilder.append(String.format("|CN%6d", matrix[i][j]));
                 } else if (i == 0 || j == 0){

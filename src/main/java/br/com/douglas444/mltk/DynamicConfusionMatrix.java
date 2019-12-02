@@ -215,4 +215,204 @@ public class DynamicConfusionMatrix {
 
         return stringBuilder.toString();
     }
+
+    public HashMap<Integer, List<Integer>> pnAssociation() {
+
+        HashMap<Integer, List<Integer>> association = new HashMap<>();
+
+        for (Integer novelColumnLabel: this.novelColumnLabels) {
+
+            int max = 0;
+            int label = -1;
+
+            for (Integer lineLabel: this.lineLabels) {
+                int line = this.lineIndexByLabel.get(lineLabel);
+                int column = this.novelColumnIndexByLabel.get(novelColumnLabel);
+                if (this.novelColumnsMatrix.get(line).get(column) > max) {
+                    max = this.novelColumnsMatrix.get(line).get(column);
+                    label = lineLabel;
+                }
+            }
+
+            if (label != -1) {
+                List<Integer> pns;
+                if ((pns = association.get(label)) != null) {
+                    pns.add(novelColumnLabel);
+                } else {
+                    pns = new ArrayList<>();
+                    pns.add(novelColumnLabel);
+                    association.put(label, pns);
+                }
+            }
+        }
+
+        return association;
+
+    }
+
+    public int tp(int label, HashMap<Integer, List<Integer>> association) {
+
+        int sum = 0;
+        int lineIndex = this.lineIndexByLabel.get(label);
+
+        if (this.knownColumnLabels.contains(label)) {
+            int columnIndex = this.knownColumnIndexByLabel.get(label);
+            sum += this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
+        }
+
+        List<Integer> pns = association.get(label);
+        if (pns == null) {
+            return sum;
+        }
+
+        sum += pns.stream()
+                .map(pn -> this.novelColumnsMatrix.get(lineIndex).get(pn))
+                .reduce(0,  Integer::sum);
+
+        return sum;
+
+    }
+
+    public int fp(int label, HashMap<Integer, List<Integer>> association) {
+
+        int sum = 0;
+
+        if (this.knownColumnLabels.contains(label)) {
+
+            int columnIndex = this.knownColumnIndexByLabel.get(label);
+
+            sum += this.lineLabels.stream()
+                    .filter(lineLabel -> lineLabel != label)
+                    .map(lineLabel -> this.lineIndexByLabel.get(lineLabel))
+                    .map(lineIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
+                    .reduce(0, Integer::sum);
+
+        }
+
+        List<Integer> pns = association.get(label);
+        if (pns == null) {
+            return sum;
+        }
+
+        sum += pns.stream()
+                .map(pn ->
+
+                    this.lineLabels.stream()
+                            .filter(lineLabel -> lineLabel != label)
+                            .map(lineLabel -> this.lineIndexByLabel.get(lineLabel))
+                            .map(lineIndex -> this.novelColumnsMatrix.get(lineIndex).get(pn))
+                            .reduce(0, Integer::sum)
+
+                )
+                .reduce(0,  Integer::sum);
+
+        return sum;
+
+    }
+
+    public int fn(int label, HashMap<Integer, List<Integer>> association) {
+
+        int sum = 0;
+
+        int lineIndex = this.lineIndexByLabel.get(label);
+
+        if (this.knownColumnLabels.contains(label)) {
+
+
+            sum += this.knownColumnLabels.stream()
+                    .filter(columnLabel -> columnLabel != label)
+                    .map(columnLabel -> this.lineIndexByLabel.get(columnLabel))
+                    .map(columnIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
+                    .reduce(0, Integer::sum);
+
+        }
+
+        List<Integer> pns = association.get(label);
+        if (pns == null) {
+            return sum;
+        }
+
+        sum += this.novelColumnLabels.stream()
+                .filter(columnLabel -> !pns.contains(columnLabel))
+                .map(columnLabel -> this.novelColumnIndexByLabel.get(columnLabel))
+                .map(columnIndex -> this.novelColumnsMatrix.get(lineIndex).get(columnIndex))
+                .reduce(0, Integer::sum);
+
+        return sum;
+    }
+
+
+    public int tn(int label, HashMap<Integer, List<Integer>> association) {
+
+        return this.lineLabels.stream()
+                .filter(lineLabel -> lineLabel != label)
+                .map(lineLabel -> this.tp(lineLabel, association))
+                .reduce(0, Integer::sum);
+
+    }
+
+    public int numberOfExplainedSamplesPerLabel(int label) {
+
+        int sum = knownColumnsMatrix.get(label)
+                .stream()
+                .reduce(0, Integer::sum);
+
+        sum += novelColumnsMatrix.get(label)
+                .stream()
+                .reduce(0, Integer::sum);
+
+        return sum;
+    }
+
+    public int numberOfExplainedSamples() {
+
+
+        return this.lineLabels.stream().map(this::numberOfExplainedSamplesPerLabel).reduce(0, Integer::sum);
+
+
+    }
+
+    public double cer() {
+
+        double sum = 0;
+
+        int totalExplainedSamples = numberOfExplainedSamples();
+        HashMap<Integer, List<Integer>> association = pnAssociation();
+
+        sum += this.lineLabels.stream().map(lineLabel -> {
+
+            int fp = this.fp(lineLabel, association);
+
+            return ((double) this.numberOfExplainedSamplesPerLabel(lineLabel) / totalExplainedSamples) *
+                    ((double) fp / (fp + tn(lineLabel, association)));
+
+        }).reduce(0.0, Double::sum);
+
+
+        sum += this.lineLabels.stream().map(lineLabel -> {
+
+            int fn = this.fn(lineLabel, association);
+
+            return ((double) this.numberOfExplainedSamplesPerLabel(lineLabel) / totalExplainedSamples) *
+                    ((double) fn / (fn + tp(lineLabel, association)));
+
+        }).reduce(0.0, Double::sum);
+
+        if (sum / 2 > 0) {
+            System.out.println("teste");
+        }
+
+        return sum / 2;
+    }
+
+    public double unkR() {
+
+        return this.lineLabels.stream()
+                .map(lineLabel -> {
+                    int lineIndex = this.lineIndexByLabel.get(lineLabel);
+                    return (double) this.unkownColumn.get(lineIndex) / this.numberOfExplainedSamplesPerLabel(lineLabel);
+                })
+                .reduce(0.0, Double::sum) / this.lineLabels.size();
+
+    }
 }

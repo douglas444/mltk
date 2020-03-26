@@ -398,10 +398,6 @@ public class DynamicConfusionMatrix {
 
         }).reduce(0.0, Double::sum);
 
-        if (sum / 2 > 0) {
-            System.out.println("teste");
-        }
-
         return sum / 2;
     }
 

@@ -90,6 +90,15 @@ public class Sample {
         }
 
     }
+
+    public void pow(int exp) {
+
+        for (int i = 0; i < x.length; ++i) {
+            x[i] = Math.pow(x[i], 2);
+        }
+
+    }
+
     /** Return a copy of the sample, with no reference between then.
      *
      * @return a copy of the sample.

@@ -5,12 +5,12 @@ import br.com.douglas444.mltk.Sample;
 
 import java.util.*;
 
-public class KMeansPlusPlus {
+public class KMeans{
 
     private List<Sample> samples;
     private List<Cluster> clusters;
 
-    public KMeansPlusPlus(List<Sample> samples, int k) {
+    public KMeans(List<Sample> samples, int k) {
 
         this.samples = samples;
 
@@ -30,8 +30,8 @@ public class KMeansPlusPlus {
         Set<Sample> centers = new HashSet<>();
 
         for (int i = 0; i < k; ++i) {
-            Sample center = randomSelectNextCenter(samples, centers);
-            //samples.remove(center);
+            Sample center = randomSelectNextCenter(samples);
+            samples.remove(center);
             centers.add(center);
         }
 
@@ -42,71 +42,13 @@ public class KMeansPlusPlus {
     /** Selects the next center in a set of samples.
      *
      * @param samples list with the candidates samples.
-     * @param centers the list containing the current centers.
      * @return the next center.
      */
-    private static Sample randomSelectNextCenter(List<Sample> samples, Set<Sample> centers) {
+    private static Sample randomSelectNextCenter(List<Sample> samples) {
 
         Random generator = new Random();
-
-        double roulette = 1;
-        HashMap<Sample, Double> probabilityBySample = mapProbabilityBySample(samples, centers);
-
-        List<Map.Entry<Sample, Double>> entries = new ArrayList<>(probabilityBySample.entrySet());
-        Iterator<Map.Entry<Sample, Double>> iterator = entries.iterator();
-        Sample selectedCenter = iterator.next().getKey();
-
-        while (iterator.hasNext()) {
-
-            Map.Entry<Sample, Double> entry = iterator.next();
-            double r = generator.nextDouble() * roulette;
-            if (r <= entry.getValue()) {
-                selectedCenter = entry.getKey();
-            } else {
-                roulette -= entry.getValue();
-            }
-
-        }
-
-        return selectedCenter;
-
-    }
-
-    /** Calculates the probability of each sample of be select as the next center.
-     *
-     * @param samples list with the candidates samples.
-     * @param centers the list containing the current centers.
-     * @return a map of probability by sample.
-     */
-    private static HashMap<Sample, Double> mapProbabilityBySample(List<Sample> samples, Set<Sample> centers) {
-
-        HashMap<Sample, Double> probabilityBySample = new HashMap<>();
-        samples.forEach(sample -> {
-            probabilityBySample.put(sample, distanceToTheClosestCenter(sample, centers));
-        });
-
-        double sum = probabilityBySample.values().stream().mapToDouble(Double::doubleValue).sum();
-        probabilityBySample.values().forEach(probability -> probability /= sum);
-
-        return probabilityBySample;
-
-    }
-
-    /** Calculates de distance of a sample to the closest center.
-     *
-     * @param sample the target sample.
-     * @param centers the list containing the centers.
-     * @return the distance of the sample to the closest center.
-     */
-    private static double distanceToTheClosestCenter(Sample sample, Set<Sample> centers) {
-
-        Sample closestCenter = getClosestCenter(sample, centers);
-
-        if (closestCenter != null) {
-            return sample.distance(closestCenter);
-        } else {
-            return 0;
-        }
+        generator.setSeed(0);
+        return samples.get(generator.nextInt(samples.size()));
 
     }
 

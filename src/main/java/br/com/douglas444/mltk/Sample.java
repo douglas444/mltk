@@ -21,8 +21,18 @@ public class Sample {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sample sample = (Sample) o;
+        return t == sample.t &&
+                y == sample.y &&
+                Arrays.equals(x, sample.x);
+    }
+
+    @Override
     public int hashCode() {
-        int result = Objects.hash(y);
+        int result = Objects.hash(t, y);
         result = 31 * result + Arrays.hashCode(x);
         return result;
     }
@@ -38,33 +48,6 @@ public class Sample {
             sum += (sample.getX()[i] - this.getX()[i]) * (sample.getX()[i] - this.getX()[i]);
         }
         return Math.sqrt(sum);
-    }
-
-    /** Indicates whether the coordinates x and y of some other sample is
-     * "equal to" this one.
-     *
-     * @param o the reference to the object to be compared
-     * @return true if the coordinates x and y are the same as the sample
-     * passed as argument; false otherwise or if the object passed isn't
-     * a instance of br.com.douglas444.common.Sample class
-     */
-    @Override
-    public boolean equals(Object o) {
-
-        if (o.getClass() != Sample.class) {
-            return false;
-        }
-
-        Sample sample = (Sample) o;
-
-        for (int i = 0; i < sample.getX().length; ++i) {
-            if (sample.getX()[i] != this.x[i]) {
-                return false;
-            }
-        }
-
-        return sample.getY() == this.y;
-
     }
 
     /** Sum coordinates x of another sample to this one. Coordinate y keeps the same.

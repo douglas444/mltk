@@ -353,11 +353,13 @@ public class DynamicConfusionMatrix {
 
     public int numberOfExplainedSamplesPerLabel(int label) {
 
-        int sum = knownColumnsMatrix.get(label)
+        int lineIndex = lineIndexByLabel.get(label);
+
+        int sum = knownColumnsMatrix.get(lineIndex)
                 .stream()
                 .reduce(0, Integer::sum);
 
-        sum += novelColumnsMatrix.get(label)
+        sum += novelColumnsMatrix.get(lineIndex)
                 .stream()
                 .reduce(0, Integer::sum);
 

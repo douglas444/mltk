@@ -5,121 +5,81 @@ import br.com.douglas444.mltk.Sample;
 
 import java.util.*;
 
-public class KMeans{
+public class KMeans {
 
     private List<Sample> samples;
-    private List<Cluster> clusters;
+    private List<Sample> centers;
 
-    public KMeans(List<Sample> samples, int k) {
-
-        this.samples = samples;
-
-        Set<Sample> centers = chooseCenters(samples, k);
-        this.clusters = groupByClosestCenter(samples, centers);
-
+    public KMeans(List<Sample> samples, int k, long seed) {
+        this.samples = new ArrayList<>(samples);
+        this.centers = chooseCenters(this.samples, k, new Random(seed));
     }
 
-    /** Chooses the initials centers.
-     *
-     * @param samples samples set.
-     * @param k number of centers.
-     * @return a list of centers.
-     */
-    private static Set<Sample> chooseCenters(List<Sample> samples, int k) {
+    private static List<Sample> chooseCenters(List<Sample> samples, int k, Random random) {
 
-        Set<Sample> centers = new HashSet<>();
+        List<Sample> centers = new ArrayList<>();
+        List<Sample> candidates = new ArrayList<>(samples);
 
-        for (int i = 0; i < k; ++i) {
-            Sample center = randomSelectNextCenter(samples);
-            samples.remove(center);
+        while (k > 0 && !candidates.isEmpty()) {
+            int randomIndex = random.nextInt(candidates.size());
+            Sample center = candidates.get(randomIndex);
+            candidates.remove(center);
             centers.add(center);
+            --k;
         }
 
         return centers;
 
     }
 
-    /** Selects the next center in a set of samples.
-     *
-     * @param samples list with the candidates samples.
-     * @return the next center.
-     */
-    private static Sample randomSelectNextCenter(List<Sample> samples) {
+    private static Optional<Sample> getClosestCenter(Sample sample, List<Sample> centers) {
 
-        Random generator = new Random();
-        generator.setSeed(0);
-        return samples.get(generator.nextInt(samples.size()));
+        return centers.stream()
+                .min(Comparator.comparing((center) -> center.distance(sample)));
 
     }
 
-    /** Calculates the closest center.
-     *
-     * @param sample the target sample.
-     * @param centers the list containing the centers.
-     * @return the closest center.
-     */
-    private static Sample getClosestCenter(Sample sample, Set<Sample> centers) {
-
-        return centers
-                .stream()
-                .min(Comparator.comparing(center -> center.distance(sample)))
-                .orElse(null);
-
-    }
-
-    /** Generates a list of clusters, grouping a list of sample by the closest center.
-     *
-     * @param samples samples to be grouped.
-     * @param centers the list containing the centers.
-     * @return a list of clusters.
-     */
-    private static List<Cluster> groupByClosestCenter(List<Sample> samples, Set<Sample> centers) {
+    private static List<Cluster> groupByClosestCenter(List<Sample> samples, List<Sample> centers) {
 
         HashMap<Sample, List<Sample>> samplesByCenter = new HashMap<>();
 
-        centers.forEach(center -> {
-            samplesByCenter.put(center, new ArrayList<>());
-        });
+        centers.forEach(center -> samplesByCenter.put(center, new ArrayList<>()));
 
         samples.forEach(sample -> {
-            Sample closestCenter = getClosestCenter(sample, centers);
-            if (closestCenter != null) {
+            getClosestCenter(sample, centers).ifPresent(closestCenter -> {
                 samplesByCenter.get(closestCenter).add(sample);
-            }
+            });
         });
 
         List<Cluster> clusters = new ArrayList<>();
+
         samplesByCenter.forEach((key, value) -> {
-            if (value.size() > 0) {
+            if (!value.isEmpty()) {
                 clusters.add(new Cluster(value));
             }
         });
+
         return clusters;
 
     }
 
-    /** Calculates de center of the current clusters and regroup the samples
-     * using the new centers. Repeat the process until the centers dont change.
-     *
-     * @return a list of clusters.
-     */
     public List<Cluster> fit() {
 
-        Set<Sample> newCenters = new HashSet<>();
-        Set<Sample> oldCenters;
+        List<Cluster> clusters;
+        List<Sample> oldCenters;
 
         do {
 
-            oldCenters = new HashSet<>(newCenters);
-            newCenters = new HashSet<>();
+            clusters = groupByClosestCenter(samples, this.centers);
+
+            oldCenters = new ArrayList<>(this.centers);
+            centers.clear();
 
             for (Cluster cluster : clusters) {
-                newCenters.add(cluster.calculateCenter());
+                centers.add(cluster.calculateCenter());
             }
 
-            clusters = groupByClosestCenter(samples, newCenters);
-
-        } while(!oldCenters.containsAll(newCenters));
+        } while(!oldCenters.containsAll(this.centers));
 
         return clusters;
     }

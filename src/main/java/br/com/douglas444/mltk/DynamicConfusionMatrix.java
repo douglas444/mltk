@@ -21,7 +21,7 @@ public class DynamicConfusionMatrix {
     //Matrix
     private List<List<Integer>> knownColumnsMatrix;
     private List<List<Integer>> novelColumnsMatrix;
-    private List<Integer> unkownColumn;
+    private List<Integer> unknownColumn;
 
     public DynamicConfusionMatrix(List<Integer> knownLabels) {
 
@@ -38,7 +38,7 @@ public class DynamicConfusionMatrix {
 
         this.knownColumnsMatrix = new ArrayList<>();
         this.novelColumnsMatrix = new ArrayList<>();
-        this.unkownColumn = new ArrayList<>();
+        this.unknownColumn = new ArrayList<>();
 
         knownLabels.forEach(this::addKnownColumn);
         knownLabels.forEach(this::addLine);
@@ -50,7 +50,7 @@ public class DynamicConfusionMatrix {
         this.lineLabels.add(label);
         this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
         this.novelColumnsMatrix.add(new ArrayList<>(Collections.nCopies(novelColumnsCount, 0)));
-        this.unkownColumn.add(0);
+        this.unknownColumn.add(0);
 
     }
 
@@ -79,8 +79,8 @@ public class DynamicConfusionMatrix {
         }
 
         int lineIndex = this.lineIndexByLabel.get(realLabel);
-        int value = this.unkownColumn.get(lineIndex);
-        this.unkownColumn.set(lineIndex, value - 1);
+        int value = this.unknownColumn.get(lineIndex);
+        this.unknownColumn.set(lineIndex, value - 1);
 
         this.addPrediction(realLabel, predictedLabel, isNovel);
 
@@ -95,8 +95,8 @@ public class DynamicConfusionMatrix {
         }
 
         int lineIndex = this.lineIndexByLabel.get(realLabel);
-        int value = this.unkownColumn.get(lineIndex);
-        this.unkownColumn.set(lineIndex, value + 1);
+        int value = this.unknownColumn.get(lineIndex);
+        this.unknownColumn.set(lineIndex, value + 1);
 
     }
 
@@ -174,8 +174,8 @@ public class DynamicConfusionMatrix {
             }
         }
 
-        for (int i = 0; i < this.unkownColumn.size(); ++i) {
-            matrix[i][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unkownColumn.get(i);
+        for (int i = 0; i < this.unknownColumn.size(); ++i) {
+            matrix[i][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unknownColumn.get(i);
         }
 
         for (int i = 0; i < this.lineLabels.size(); ++i) {
@@ -407,8 +407,20 @@ public class DynamicConfusionMatrix {
 
         return this.lineLabels.stream()
                 .map(lineLabel -> {
-                    int lineIndex = this.lineIndexByLabel.get(lineLabel);
-                    return (double) this.unkownColumn.get(lineIndex) / this.numberOfExplainedSamplesPerLabel(lineLabel);
+
+                    double unexplained = this.unknownColumn.get(this.lineIndexByLabel.get(lineLabel));
+                    double explained = this.numberOfExplainedSamplesPerLabel(lineLabel);
+
+                    if (explained == 0) {
+                        if (unexplained == 0) {
+                            return 0.0;
+                        } else {
+                            return 1.0;
+                        }
+                    } else {
+                        return unexplained / explained;
+                    }
+
                 })
                 .reduce(0.0, Double::sum) / this.lineLabels.size();
 

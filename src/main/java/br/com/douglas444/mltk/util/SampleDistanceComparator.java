@@ -1,12 +1,14 @@
-package br.com.douglas444.mltk;
+package br.com.douglas444.mltk.util;
+
+import br.com.douglas444.mltk.datastructure.Sample;
 
 import java.util.Comparator;
 
-public class DistanceComparator implements Comparator<Sample> {
+public class SampleDistanceComparator implements Comparator<Sample> {
 
     private Sample target;
 
-    public DistanceComparator(Sample target) {
+    public SampleDistanceComparator(final Sample target) {
         this.target = target;
     }
 
@@ -14,11 +16,11 @@ public class DistanceComparator implements Comparator<Sample> {
      * the target sample defined as a class attribute.
      *
      * @return Returns 0 if p1 and p2 have the same distance to the target
-     * sample, -1 if p1 are closer to the target sample and returns 1 if p1
+     * sample, -1 if p1 are closer to the target sample, and returns 1 if p1
      * are closer to the target sample.
      */
     @Override
-    public int compare(Sample p1, Sample p2) {
+    public int compare(final Sample p1, final Sample p2) {
 
         double d1 = p1.distance(this.target);
         double d2 = p2.distance(this.target);

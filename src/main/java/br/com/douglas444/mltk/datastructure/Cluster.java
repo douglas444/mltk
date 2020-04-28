@@ -1,5 +1,6 @@
-package br.com.douglas444.mltk;
+package br.com.douglas444.mltk.datastructure;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Cluster {
@@ -7,33 +8,32 @@ public class Cluster {
     private List<Sample> samples;
 
     public Cluster(List<Sample> samples) {
-        this.samples = samples;
-    }
 
-    /** Calculates center of the cluster.
-     *
-     * @return the center os the cluster.
-     */
-    public Sample calculateCenter() {
-
-        Sample center = null;
-
-        if (this.samples.size() > 0) {
-            center = this.samples.get(0).copy();
-            this.samples.subList(1, this.samples.size()).forEach(center::sum);
-            center.divide(this.samples.size());
+        if (samples.isEmpty()) {
+            throw new IllegalArgumentException();
         }
 
+        this.samples = new ArrayList<>(samples);
+    }
+
+    public Sample calculateCenter() {
+
+        final Sample center = this.samples.get(0).copy();
+
+        if (samples.size() > 1) {
+            this.samples.subList(1, this.samples.size()).forEach(center::sum);
+        }
+
+        center.divide(this.samples.size());
         return center;
 
     }
 
     public double calculateStandardDeviation() {
 
-        Sample center = this.calculateCenter();
+        final Sample center = this.calculateCenter();
 
-        double sum = this
-                .samples
+        final double sum = this.samples
                 .stream()
                 .mapToDouble(sample -> Math.pow(sample.distance(center), 2))
                 .sum();
@@ -44,6 +44,8 @@ public class Cluster {
     public int getSize() {
         return samples.size();
     }
+
+    public boolean isEmpty() {return samples.isEmpty();}
 
     public List<Sample> getSamples() {
         return samples;

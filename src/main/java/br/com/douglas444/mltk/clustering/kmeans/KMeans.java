@@ -8,14 +8,22 @@ import java.util.*;
 public class KMeans {
 
     public static List<Cluster> execute(final List<Sample> samples, final int k, final long seed) {
-        return execute(samples, k, seed, true);
+
+        List<Sample> centers = chooseCentersPlusPlus(samples, k, new Random(seed));
+        return execute(samples, centers);
+
     }
 
-    public static List<Cluster> execute(final List<Sample> samples, final int k, final long seed,
-                                        final boolean usePlusPlus) {
+    public static List<Cluster> execute(final List<Sample> samples, final int k, final long seed, boolean usePlusPlus) {
 
-        final List<Sample> centers = usePlusPlus ? chooseCentersPlusPlus(samples, k, new Random(seed)) :
+        List<Sample> centers = usePlusPlus ? chooseCentersPlusPlus(samples, k, new Random(seed)) :
                 chooseCenters(samples, k, new Random(seed));
+
+        return execute(samples, centers);
+
+    }
+
+    public static List<Cluster> execute(final List<Sample> samples, final List<Sample> centers) {
 
         List<Cluster> clusters;
         List<Sample> oldCenters;
@@ -91,7 +99,7 @@ public class KMeans {
         List<Sample> centers = new ArrayList<>();
 
         for (int i = 0; i < k; ++i) {
-            Sample center = randomSelectNextCenter(samples, centers, random);
+            Sample center = selectNextCenter(samples, centers, random);
             centers.add(center);
         }
 
@@ -99,29 +107,30 @@ public class KMeans {
 
     }
 
-    private static Sample randomSelectNextCenter(final List<Sample> samples, final List<Sample> centers,
-                                                 final Random generator) {
+    private static Sample selectNextCenter(final List<Sample> samples, final List<Sample> centers,
+                                           final Random random) {
 
         final HashMap<Sample, Double> probabilityBySample = mapProbabilityBySample(samples, centers);
         final List<Map.Entry<Sample, Double>> entries = new ArrayList<>(probabilityBySample.entrySet());
         final Iterator<Map.Entry<Sample, Double>> iterator = entries.iterator();
 
-        Sample selectedCenter = iterator.next().getKey();
-        double roulette = 1;
+        double cumulativeProbability = 0;
+        Sample selected = null;
+        final double r = random.nextDouble();
 
-        while (iterator.hasNext()) {
+        while (selected == null) {
 
             final Map.Entry<Sample, Double> entry = iterator.next();
-            final double r = generator.nextDouble() * roulette;
-            if (r <= entry.getValue()) {
-                selectedCenter = entry.getKey();
-            } else {
-                roulette -= entry.getValue();
+
+            cumulativeProbability += entry.getValue();
+
+            if (r <= cumulativeProbability || !iterator.hasNext()) {
+                selected = entry.getKey();
             }
 
         }
 
-        return selectedCenter;
+        return selected;
 
     }
 

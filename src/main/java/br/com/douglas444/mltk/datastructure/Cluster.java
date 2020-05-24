@@ -16,26 +16,26 @@ public class Cluster {
         this.samples = new ArrayList<>(samples);
     }
 
-    public Sample calculateCenter() {
+    public Sample calculateCentroid() {
 
-        final Sample center = this.samples.get(0).copy();
+        final Sample centroid = this.samples.get(0).copy();
 
         if (samples.size() > 1) {
-            this.samples.subList(1, this.samples.size()).forEach(center::sum);
+            this.samples.subList(1, this.samples.size()).forEach(centroid::sum);
         }
 
-        center.divide(this.samples.size());
-        return center;
+        centroid.divide(this.samples.size());
+        return centroid;
 
     }
 
     public double calculateStandardDeviation() {
 
-        final Sample center = this.calculateCenter();
+        final Sample centroid = this.calculateCentroid();
 
         final double sum = this.samples
                 .stream()
-                .mapToDouble(sample -> Math.pow(sample.distance(center), 2))
+                .mapToDouble(sample -> Math.pow(sample.distance(centroid), 2))
                 .sum();
 
         return Math.sqrt(sum / this.samples.size());

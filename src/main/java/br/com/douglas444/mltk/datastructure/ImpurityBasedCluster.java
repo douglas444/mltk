@@ -126,4 +126,15 @@ public class ImpurityBasedCluster {
 
     }
 
+    public int getNumberOfLabeledSamples() {
+        return numberOfLabeledSamples;
+    }
+
+    public HashMap<Integer, List<Sample>> getSamplesByLabel() {
+        return samplesByLabel;
+    }
+
+    public List<Sample> getUnlabeledSamples() {
+        return unlabeledSamples;
+    }
 }

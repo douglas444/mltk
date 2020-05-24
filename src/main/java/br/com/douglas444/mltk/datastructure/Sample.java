@@ -1,7 +1,6 @@
 package br.com.douglas444.mltk.datastructure;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 public class Sample {
 
@@ -77,6 +76,10 @@ public class Sample {
         }
         return sample;
 
+    }
+
+    public Optional<Sample> getClosestSample(final List<Sample> samples) {
+        return samples.stream().min(Comparator.comparing(this::distance));
     }
 
     public int getT() {

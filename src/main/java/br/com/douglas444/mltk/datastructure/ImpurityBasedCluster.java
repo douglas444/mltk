@@ -1,8 +1,6 @@
 package br.com.douglas444.mltk.datastructure;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ImpurityBasedCluster {
 
@@ -114,6 +112,23 @@ public class ImpurityBasedCluster {
                 .sum();
 
         return Math.sqrt(sum / samples.size());
+    }
+
+    public double calculateRadius() {
+
+        final List<Sample> samples = new ArrayList<>();
+        this.samplesByLabel.values().forEach(samples::addAll);
+        samples.addAll(this.unlabeledSamples);
+
+        return Collections.max(samples, Comparator.comparing(sample -> centroid.distance(sample)))
+                .distance(centroid);
+
+    }
+
+    public double getMostFrequentLabel() {
+
+        return Collections.max(this.samplesByLabel.keySet(),
+                Comparator.comparing(label -> this.samplesByLabel.get(label).size()));
     }
 
     public int dissimilarityCount(final Sample labeledSample) {

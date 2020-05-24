@@ -35,7 +35,7 @@ public final class KMeans {
         return clusters;
     }
 
-    protected static List<Sample> chooseCentroids(final List<Sample> samples, final int k, final Random random) {
+    static List<Sample> chooseCentroids(final List<Sample> samples, final int k, final Random random) {
 
         final List<Sample> centroids = new ArrayList<>();
         final List<Sample> candidates = new ArrayList<>(samples);
@@ -54,14 +54,14 @@ public final class KMeans {
 
     }
 
-    protected static Optional<Sample> getClosestCentroid(final Sample sample, final List<Sample> centroids) {
+    static Optional<Sample> getClosestCentroid(final Sample sample, final List<Sample> centroids) {
 
         return centroids.stream()
                 .min(Comparator.comparing((centroid) -> centroid.distance(sample)));
 
     }
 
-    protected static List<Cluster> groupByClosestCentroid(final List<Sample> samples, final List<Sample> centroids) {
+    static List<Cluster> groupByClosestCentroid(final List<Sample> samples, final List<Sample> centroids) {
 
         final HashMap<Sample, List<Sample>> samplesByCentroid = new HashMap<>();
 
@@ -86,7 +86,7 @@ public final class KMeans {
     }
 
 
-    protected static double distanceToTheClosestCentroid(final Sample sample, List<Sample> centroids) {
+    static double distanceToTheClosestCentroid(final Sample sample, List<Sample> centroids) {
 
         final Optional<Sample> closestCentroid = getClosestCentroid(sample, centroids);
         return closestCentroid.map(sample::distance).orElse(0.0);

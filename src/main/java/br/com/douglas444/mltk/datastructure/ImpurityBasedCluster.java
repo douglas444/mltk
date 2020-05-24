@@ -125,7 +125,7 @@ public class ImpurityBasedCluster {
 
     }
 
-    public double getMostFrequentLabel() {
+    public Integer getMostFrequentLabel() {
 
         return Collections.max(this.samplesByLabel.keySet(),
                 Comparator.comparing(label -> this.samplesByLabel.get(label).size()));

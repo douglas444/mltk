@@ -72,7 +72,6 @@ public class DynamicConfusionMatrix {
     }
 
     private void addLine(final Integer label) {
-
         this.lineIndexByLabel.put(label, lineLabels.size());
         this.lineLabels.add(label);
         this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
@@ -202,7 +201,7 @@ public class DynamicConfusionMatrix {
         }
 
         for (int i = 0; i < this.unknownColumn.size(); ++i) {
-            matrix[i][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unknownColumn.get(i);
+            matrix[i + 1][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unknownColumn.get(i);
         }
 
         for (int i = 0; i < this.lineLabels.size(); ++i) {

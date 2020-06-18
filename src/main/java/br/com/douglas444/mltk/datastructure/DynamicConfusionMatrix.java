@@ -309,7 +309,7 @@ public class DynamicConfusionMatrix {
 
             sum += this.lineLabels.stream()
                     .filter(lineLabel -> lineLabel != label)
-                    .map(lineLabel -> this.lineIndexByLabel.get(lineLabel))
+                    .map(this.lineIndexByLabel::get)
                     .map(lineIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
                     .reduce(0, Integer::sum);
 
@@ -325,7 +325,7 @@ public class DynamicConfusionMatrix {
 
                     this.lineLabels.stream()
                             .filter(lineLabel -> lineLabel != label)
-                            .map(lineLabel -> this.lineIndexByLabel.get(lineLabel))
+                            .map(this.lineIndexByLabel::get)
                             .map(lineIndex -> this.novelColumnsMatrix.get(lineIndex).get(pn))
                             .reduce(0, Integer::sum)
 
@@ -347,7 +347,7 @@ public class DynamicConfusionMatrix {
 
             sum += this.knownColumnLabels.stream()
                     .filter(columnLabel -> columnLabel != label)
-                    .map(columnLabel -> this.lineIndexByLabel.get(columnLabel))
+                    .map(this.lineIndexByLabel::get)
                     .map(columnIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
                     .reduce(0, Integer::sum);
 
@@ -360,7 +360,7 @@ public class DynamicConfusionMatrix {
 
         sum += this.novelColumnLabels.stream()
                 .filter(columnLabel -> !pns.contains(columnLabel))
-                .map(columnLabel -> this.novelColumnIndexByLabel.get(columnLabel))
+                .map(this.novelColumnIndexByLabel::get)
                 .map(columnIndex -> this.novelColumnsMatrix.get(lineIndex).get(columnIndex))
                 .reduce(0, Integer::sum);
 
@@ -410,25 +410,6 @@ public class DynamicConfusionMatrix {
         sum += this.lineLabels.stream().map(lineLabel -> {
 
             final int fp = this.fp(lineLabel, association);
-
-            final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
-
-            if (numberOfExplainedSamples == 0) {
-
-                return 0.0;
-
-            } else {
-
-                return ((double) numberOfExplainedSamples / totalExplainedSamples) *
-                        ((double) fp / (fp + tn(lineLabel, association)));
-
-            }
-
-        }).reduce(0.0, Double::sum);
-
-
-        sum += this.lineLabels.stream().map(lineLabel -> {
-
             final int fn = this.fn(lineLabel, association);
 
             final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
@@ -440,9 +421,13 @@ public class DynamicConfusionMatrix {
             } else {
 
                 return ((double) numberOfExplainedSamples / totalExplainedSamples) *
+                        ((double) fp / (fp + tn(lineLabel, association)))
+
+                        + ((double) numberOfExplainedSamples / totalExplainedSamples) *
                         ((double) fn / (fn + tp(lineLabel, association)));
 
             }
+
         }).reduce(0.0, Double::sum);
 
         return sum / 2;

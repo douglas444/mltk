@@ -1,11 +1,13 @@
 package br.com.douglas444.mltk.datastructure;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Cluster {
 
     private List<Sample> samples;
+    private Sample mostRecentSample;
 
     public Cluster(List<Sample> samples) {
 
@@ -13,6 +15,7 @@ public class Cluster {
             throw new IllegalArgumentException();
         }
 
+        this.mostRecentSample = null;
         this.samples = new ArrayList<>(samples);
     }
 
@@ -20,7 +23,7 @@ public class Cluster {
 
         final Sample centroid = this.samples.get(0).copy();
 
-        if (samples.size() > 1) {
+        if (this.samples.size() > 1) {
             this.samples.subList(1, this.samples.size()).forEach(centroid::sum);
         }
 
@@ -41,6 +44,23 @@ public class Cluster {
         return Math.sqrt(sum / this.samples.size());
     }
 
+    public Sample getMostRecentSample() {
+
+        if (this.samples.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+
+        if (this.mostRecentSample == null) {
+            this.mostRecentSample = this.samples
+                    .stream()
+                    .min(Comparator.comparing(Sample::getT))
+                    .orElse(this.getSamples().get(0));
+        }
+
+        return mostRecentSample;
+
+    }
+
     public int getSize() {
         return samples.size();
     }
@@ -51,8 +71,5 @@ public class Cluster {
         return samples;
     }
 
-    public void setSamples(List<Sample> samples) {
-        this.samples = samples;
-    }
 
 }

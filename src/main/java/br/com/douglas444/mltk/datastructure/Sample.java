@@ -4,17 +4,17 @@ import java.util.*;
 
 public class Sample {
 
-    private int t;
+    private long t;
     private double[] x;
-    private int y;
+    private Integer y;
 
-    public Sample(int t, double[] x, int y) {
+    public Sample(int t, double[] x, Integer y) {
         this.t = t;
         this.x = x.clone();
         this.y = y;
     }
 
-    public Sample(double[] x, int y) {
+    public Sample(double[] x, Integer y) {
         this.x = x.clone();
         this.y = y;
     }
@@ -25,7 +25,7 @@ public class Sample {
         if (o == null || getClass() != o.getClass()) return false;
         final Sample sample = (Sample) o;
         return this.t == sample.t &&
-                this.y == sample.y &&
+                this.y.equals(sample.y) &&
                 Arrays.equals(this.x, sample.x);
     }
 
@@ -82,11 +82,11 @@ public class Sample {
         return samples.stream().min(Comparator.comparing(this::distance));
     }
 
-    public int getT() {
+    public long getT() {
         return t;
     }
 
-    public void setT(int t) {
+    public void setT(long t) {
         this.t = t;
     }
 
@@ -98,11 +98,11 @@ public class Sample {
         this.x = x;
     }
 
-    public int getY() {
+    public Integer getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(Integer y) {
         this.y = y;
     }
 

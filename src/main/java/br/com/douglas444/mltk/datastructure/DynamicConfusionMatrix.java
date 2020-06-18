@@ -411,8 +411,18 @@ public class DynamicConfusionMatrix {
 
             final int fp = this.fp(lineLabel, association);
 
-            return ((double) this.numberOfExplainedSamplesPerLabel(lineLabel) / totalExplainedSamples) *
-                    ((double) fp / (fp + tn(lineLabel, association)));
+            final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
+
+            if (numberOfExplainedSamples == 0) {
+
+                return 0.0;
+
+            } else {
+
+                return ((double) numberOfExplainedSamples / totalExplainedSamples) *
+                        ((double) fp / (fp + tn(lineLabel, association)));
+
+            }
 
         }).reduce(0.0, Double::sum);
 
@@ -421,9 +431,18 @@ public class DynamicConfusionMatrix {
 
             final int fn = this.fn(lineLabel, association);
 
-            return ((double) this.numberOfExplainedSamplesPerLabel(lineLabel) / totalExplainedSamples) *
-                    ((double) fn / (fn + tp(lineLabel, association)));
+            final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
 
+            if (numberOfExplainedSamples == 0) {
+
+                return 0.0;
+
+            } else {
+
+                return ((double) numberOfExplainedSamples / totalExplainedSamples) *
+                        ((double) fn / (fn + tp(lineLabel, association)));
+
+            }
         }).reduce(0.0, Double::sum);
 
         return sum / 2;

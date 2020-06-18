@@ -58,10 +58,12 @@ public final class KMeansPlusPlus {
                                                                   final List<Sample> centroids) {
 
         final HashMap<Sample, Double> probabilityBySample = new HashMap<>();
-        samples.forEach(sample -> probabilityBySample.put(sample, KMeans.distanceToTheClosestCentroid(sample, centroids)));
 
-        final double sum = probabilityBySample.values().stream().mapToDouble(Double::doubleValue).sum();
-        probabilityBySample.values().forEach(probability -> probability /= sum);
+        samples.forEach(sample ->
+                probabilityBySample.put(sample, Math.pow(KMeans.distanceToTheClosestCentroid(sample, centroids), 2)));
+
+        final double sum = probabilityBySample.values().stream().reduce(0.0, Double::sum);
+        probabilityBySample.replaceAll((sample, probability) -> probability / sum);
 
         return probabilityBySample;
 

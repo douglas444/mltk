@@ -8,9 +8,12 @@ import java.util.stream.Collectors;
 
 public final class MCIKMeans {
 
-    public static List<ImpurityBasedCluster> execute(final List<Sample> labeledSamples,
-                                                     final List<Sample> unlabeledSamples,
+    public static List<ImpurityBasedCluster> execute(List<Sample> labeledSamples,
+                                                     List<Sample> unlabeledSamples,
                                                      final int k, final long seed) {
+
+        labeledSamples = new ArrayList<>(labeledSamples);
+        unlabeledSamples = new ArrayList<>(unlabeledSamples);
 
         final HashMap<Integer, List<Sample>> samplesByLabel = new HashMap<>();
 
@@ -21,9 +24,9 @@ public final class MCIKMeans {
 
         final List<Sample> centroids = new ArrayList<>();
 
-        samplesByLabel.forEach((label, samples) -> {
-
-            int numberOfCentroids = k * (samples.size() /  labeledSamples.size());
+        for (Map.Entry<Integer, List<Sample>> entry : samplesByLabel.entrySet()) {
+            List<Sample> samples = entry.getValue();
+            int numberOfCentroids = k * (samples.size() / labeledSamples.size());
             centroids.addAll(chooseCentroids(samples, numberOfCentroids));
 
             if (centroids.size() < numberOfCentroids && !unlabeledSamples.isEmpty()) {
@@ -33,7 +36,7 @@ public final class MCIKMeans {
                 }
             }
 
-        });
+        }
 
         return execute(labeledSamples, unlabeledSamples, centroids, new Random(seed));
 

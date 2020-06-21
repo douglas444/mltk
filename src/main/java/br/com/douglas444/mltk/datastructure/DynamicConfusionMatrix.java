@@ -448,7 +448,7 @@ public class DynamicConfusionMatrix {
                             return 1.0;
                         }
                     } else {
-                        return unexplained / explained;
+                        return unexplained / (explained + unexplained);
                     }
 
                 })

@@ -7,8 +7,9 @@ import java.util.*;
 
 public final class KMeansPlusPlus {
 
-    public static List<Cluster> execute(final List<Sample> samples, final int k, final long seed) {
+    public static List<Cluster> execute(List<Sample> samples, final int k, final long seed) {
 
+        samples = new ArrayList<>(samples);
         final List<Sample> centroids = chooseCentroids(samples, k, new Random(seed));
         return KMeans.execute(samples, centroids);
 

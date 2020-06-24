@@ -7,6 +7,7 @@ public class Sample {
     private long t;
     private double[] x;
     private Integer y;
+    private Integer clusterId;
 
     public Sample(int t, double[] x, Integer y) {
         this.t = t;
@@ -106,4 +107,11 @@ public class Sample {
         this.y = y;
     }
 
+    public Integer getClusterId() {
+        return clusterId;
+    }
+
+    public void setClusterId(Integer clusterId) {
+        this.clusterId = clusterId;
+    }
 }

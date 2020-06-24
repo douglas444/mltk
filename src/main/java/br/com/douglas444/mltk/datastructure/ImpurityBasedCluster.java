@@ -4,14 +4,16 @@ import java.util.*;
 
 public class ImpurityBasedCluster {
 
+    private Integer id;
     private double entropy;
     private int numberOfLabeledSamples;
     private Sample centroid;
     private HashMap<Integer, List<Sample>> samplesByLabel;
     private List<Sample> unlabeledSamples;
 
-    public ImpurityBasedCluster(Sample centroid) {
+    public ImpurityBasedCluster(Integer id, Sample centroid) {
 
+        this.id = id;
         this.centroid = centroid;
 
         this.numberOfLabeledSamples = 0;
@@ -20,13 +22,18 @@ public class ImpurityBasedCluster {
         this.entropy = 0;
     }
 
-    public ImpurityBasedCluster(List<Sample> labeledSamples, List<Sample> unlabeledSamples) {
+    public int size() {
+        return this.numberOfLabeledSamples + unlabeledSamples.size();
+    }
+
+    public ImpurityBasedCluster(Integer id, List<Sample> labeledSamples, List<Sample> unlabeledSamples) {
 
         if ((labeledSamples == null || labeledSamples.isEmpty()) &&
                 (unlabeledSamples == null || unlabeledSamples.isEmpty())) {
             throw new IllegalArgumentException();
         }
 
+        this.id = id;
         this.numberOfLabeledSamples = 0;
         this.samplesByLabel = new HashMap<>();
 
@@ -39,30 +46,46 @@ public class ImpurityBasedCluster {
         }
 
         this.unlabeledSamples = new ArrayList<>(unlabeledSamples);
-        this.calculateEntropy();
-        this.calculateCentroid();
+        this.updateEntropy();
     }
 
     public void addUnlabeledSample(Sample sample) {
+        sample.setClusterId(this.id);
         this.unlabeledSamples.add(sample);
-        this.calculateCentroid();
     }
 
     public void addLabeledSample(Sample sample) {
+        sample.setClusterId(this.id);
         this.samplesByLabel.putIfAbsent(sample.getY(), new ArrayList<>());
         this.samplesByLabel.get(sample.getY()).add(sample);
         this.numberOfLabeledSamples++;
-        this.calculateEntropy();
-        this.calculateCentroid();
     }
 
-    private void calculateEntropy() {
+    public void removeUnlabeledSample(Sample sample) {
+        sample.setClusterId(null);
+        this.unlabeledSamples.remove(sample);
+    }
+
+    public void removeLabeledSample(Sample sample) {
+
+        sample.setClusterId(null);
+
+        if (this.samplesByLabel.containsKey(sample.getY())) {
+            this.samplesByLabel.get(sample.getY()).remove(sample);
+        }
+
+        this.numberOfLabeledSamples--;
+    }
+
+    public double updateEntropy() {
 
         this.entropy = this.samplesByLabel.keySet()
                 .stream()
                 .map(this::calculateLabelProbability)
                 .map(p -> -p * Math.log(p))
                 .reduce(0.0, Double::sum);
+
+        return this.entropy;
 
     }
 
@@ -80,7 +103,7 @@ public class ImpurityBasedCluster {
 
     }
 
-    private void calculateCentroid() {
+    public Sample updateCentroid() {
 
         final List<Sample> samples = new ArrayList<>();
         this.samplesByLabel.values().forEach(samples::addAll);
@@ -93,8 +116,8 @@ public class ImpurityBasedCluster {
         }
 
         centroid.divide(samples.size());
-
         this.centroid = centroid;
+        return this.centroid;
 
     }
 
@@ -152,4 +175,14 @@ public class ImpurityBasedCluster {
     public List<Sample> getUnlabeledSamples() {
         return unlabeledSamples;
     }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+
 }

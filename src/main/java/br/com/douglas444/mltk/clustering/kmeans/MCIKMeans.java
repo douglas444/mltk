@@ -8,7 +8,7 @@ import java.util.*;
 public final class MCIKMeans {
 
     public static List<ImpurityBasedCluster> execute(List<Sample> labeledSamples, List<Sample> unlabeledSamples,
-                                                     final int k, final long seed) {
+                                                     final int k, final Random random) {
 
         if (k < 2) {
             throw new IllegalArgumentException();
@@ -30,31 +30,56 @@ public final class MCIKMeans {
 
         final List<Sample> centroids = new ArrayList<>();
 
-        for (Map.Entry<Integer, List<Sample>> entry : samplesByLabel.entrySet()) {
 
-            List<Sample> samples = entry.getValue();
-            int numberOfCentroids = (int) (k * (double) samples.size() / labeledSamples.size());
-            centroids.addAll(chooseCentroids(samples, numberOfCentroids));
+        List<List<Sample>> lists = new ArrayList<>(samplesByLabel.values());
+        int[] numbersOfCentroids = new int[samplesByLabel.values().size()];
+        double remaining = 0;
 
-            if (centroids.size() < numberOfCentroids && !unlabeledSamples.isEmpty()) {
+        for (int i = 0; i < lists.size(); ++i) {
+            List<Sample> samples = lists.get(i);
+            double rate = k * (double) samples.size() / labeledSamples.size();
+            remaining += rate - (int) rate;
+            numbersOfCentroids[i] = (int) rate;
+        }
+
+        while (remaining > 0) {
+
+            --remaining;
+
+            int minRate = -1;
+            for (int i = 0; i < numbersOfCentroids.length; ++i) {
+                if (minRate == -1 || numbersOfCentroids[i] < numbersOfCentroids[minRate]) {
+                    minRate = i;
+                }
+            }
+
+            ++numbersOfCentroids[minRate];
+
+        }
+
+        for (int i = 0; i < lists.size(); ++i) {
+
+            List<Sample> samples = lists.get(i);
+            centroids.addAll(chooseCentroids(samples, numbersOfCentroids[i]));
+
+            if (centroids.size() < numbersOfCentroids[i] && !unlabeledSamples.isEmpty()) {
                 final List<Sample> fillingSamples = new ArrayList<>(unlabeledSamples);
-                Collections.shuffle(fillingSamples, new Random(seed));
-                while (centroids.size() < numberOfCentroids && !fillingSamples.isEmpty()) {
+                Collections.shuffle(fillingSamples, random);
+                while (centroids.size() < numbersOfCentroids[i] && !fillingSamples.isEmpty()) {
                     centroids.add(fillingSamples.remove(0));
                 }
+
             }
 
         }
 
-        return execute(labeledSamples, unlabeledSamples, centroids, new Random(seed));
+        return execute(labeledSamples, unlabeledSamples, centroids, random);
 
     }
 
     private static List<ImpurityBasedCluster> execute(final List<Sample> labeledSamples,
                                                       final List<Sample> unlabeledSamples,
                                                       final List<Sample> centroids, final Random random) {
-
-
 
         final List<ImpurityBasedCluster> clusters = new ArrayList<>();
         final HashMap<Integer, ImpurityBasedCluster> clusterById = new HashMap<>();
@@ -72,6 +97,8 @@ public final class MCIKMeans {
         } while (changing);
 
         clusters.removeIf(cluster -> cluster.size() == 0);
+
+        clusters.sort(Comparator.comparing(cluster -> Arrays.toString(cluster.getCentroid().getX())));
         return clusters;
 
     }
@@ -161,6 +188,16 @@ public final class MCIKMeans {
 
                 });
 
+                Integer oldClusterId = sample.getClusterId();
+
+                if (sample.getClusterId() != null) {
+                    if (isLabeled) {
+                        clusterById.get(sample.getClusterId()).removeLabeledSample(sample);
+                    } else {
+                        clusterById.get(sample.getClusterId()).removeUnlabeledSample(sample);
+                    }
+                }
+
                 ImpurityBasedCluster chosenCluster = clusters.get(0);
 
                 for (int j = 1; j < clusters.size(); j++) {
@@ -170,26 +207,18 @@ public final class MCIKMeans {
                     }
                 }
 
-                if (!chosenCluster.getId().equals(sample.getClusterId())) {
+                if (isLabeled) {
+                    chosenCluster.addLabeledSample(sample);
+                } else {
+                    chosenCluster.addUnlabeledSample(sample);
+                }
+
+                chosenCluster.updateEntropy();
+
+                if (!chosenCluster.getId().equals(oldClusterId)) {
 
                     changed = true;
                     noChanges = false;
-
-                    if (sample.getClusterId() != null) {
-                        if (isLabeled) {
-                            clusterById.get(sample.getClusterId()).removeLabeledSample(sample);
-                        } else {
-                            clusterById.get(sample.getClusterId()).removeUnlabeledSample(sample);
-                        }
-                    }
-
-                    if (isLabeled) {
-                        chosenCluster.addLabeledSample(sample);
-                    } else {
-                        chosenCluster.addUnlabeledSample(sample);
-                    }
-
-                    chosenCluster.updateEntropy();
 
                 }
 

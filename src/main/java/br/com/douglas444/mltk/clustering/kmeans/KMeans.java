@@ -7,10 +7,10 @@ import java.util.*;
 
 public final class KMeans {
 
-    public static List<Cluster> execute(List<Sample> samples, final int k, final long seed) {
+    public static List<Cluster> execute(List<Sample> samples, final int k, final Random random) {
 
         samples = new ArrayList<>(samples);
-        final List<Sample> centroids = chooseCentroids(samples, k, new Random(seed));
+        final List<Sample> centroids = chooseCentroids(samples, k, random);
         return execute(samples, centroids);
 
     }

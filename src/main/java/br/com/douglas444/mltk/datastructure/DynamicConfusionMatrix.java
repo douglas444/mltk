@@ -149,6 +149,12 @@ public class DynamicConfusionMatrix {
 
         } else {
 
+            if (!this.knownColumnIndexByLabel.containsKey(predictedLabel)) {
+
+                throw new RuntimeException("Predicted label is not known");
+
+            }
+
             final int columnIndex = this.knownColumnIndexByLabel.get(predictedLabel);
             final int count = this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
             this.knownColumnsMatrix.get(lineIndex).set(columnIndex, count + 1);

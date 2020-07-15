@@ -4,12 +4,12 @@ import java.util.*;
 
 public class ImpurityBasedCluster {
 
-    private Integer id;
+    private final Integer id;
     private double entropy;
     private int numberOfLabeledSamples;
     private Sample centroid;
-    private HashMap<Integer, List<Sample>> samplesByLabel;
-    private List<Sample> unlabeledSamples;
+    private final HashMap<Integer, List<Sample>> samplesByLabel;
+    private final List<Sample> unlabeledSamples;
 
     public ImpurityBasedCluster(Integer id, Sample centroid) {
 
@@ -68,6 +68,10 @@ public class ImpurityBasedCluster {
 
     public void removeLabeledSample(Sample sample) {
 
+        if (this.numberOfLabeledSamples <= 0) {
+            System.out.println("teste");
+        }
+
         sample.setClusterId(null);
 
         if (this.samplesByLabel.containsKey(sample.getY())) {
@@ -77,15 +81,13 @@ public class ImpurityBasedCluster {
         this.numberOfLabeledSamples--;
     }
 
-    public double updateEntropy() {
+    public void updateEntropy() {
 
         this.entropy = this.samplesByLabel.keySet()
                 .stream()
                 .map(this::calculateLabelProbability)
                 .map(p -> -p * Math.log(p))
                 .reduce(0.0, Double::sum);
-
-        return this.entropy;
 
     }
 
@@ -103,7 +105,7 @@ public class ImpurityBasedCluster {
 
     }
 
-    public Sample updateCentroid() {
+    public void updateCentroid() {
 
         final List<Sample> samples = new ArrayList<>();
         this.samplesByLabel.values().forEach(samples::addAll);
@@ -117,7 +119,6 @@ public class ImpurityBasedCluster {
 
         centroid.divide(samples.size());
         this.centroid = centroid;
-        return this.centroid;
 
     }
 
@@ -146,6 +147,13 @@ public class ImpurityBasedCluster {
         return Collections.max(samples, Comparator.comparing(sample -> centroid.distance(sample)))
                 .distance(centroid);
 
+    }
+
+    public List<Sample> getSamples() {
+        final List<Sample> samples = new ArrayList<>();
+        this.samplesByLabel.values().forEach(samples::addAll);
+        samples.addAll(this.unlabeledSamples);
+        return samples;
     }
 
     public Integer getMostFrequentLabel() {
@@ -179,10 +187,5 @@ public class ImpurityBasedCluster {
     public Integer getId() {
         return id;
     }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
 
 }

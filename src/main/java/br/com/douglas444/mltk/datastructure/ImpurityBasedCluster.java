@@ -50,29 +50,20 @@ public class ImpurityBasedCluster {
     }
 
     public void addUnlabeledSample(Sample sample) {
-        sample.setClusterId(this.id);
         this.unlabeledSamples.add(sample);
     }
 
     public void addLabeledSample(Sample sample) {
-        sample.setClusterId(this.id);
         this.samplesByLabel.putIfAbsent(sample.getY(), new ArrayList<>());
         this.samplesByLabel.get(sample.getY()).add(sample);
         this.numberOfLabeledSamples++;
     }
 
     public void removeUnlabeledSample(Sample sample) {
-        sample.setClusterId(null);
         this.unlabeledSamples.remove(sample);
     }
 
     public void removeLabeledSample(Sample sample) {
-
-        if (this.numberOfLabeledSamples <= 0) {
-            System.out.println("teste");
-        }
-
-        sample.setClusterId(null);
 
         if (this.samplesByLabel.containsKey(sample.getY())) {
             this.samplesByLabel.get(sample.getY()).remove(sample);

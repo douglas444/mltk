@@ -98,7 +98,9 @@ public final class MCIKMeans {
 
         clusters.removeIf(cluster -> cluster.size() == 0);
 
-        clusters.sort(Comparator.comparing(cluster -> Arrays.toString(cluster.getCentroid().getX())));
+        labeledSamples.forEach(sample -> sample.setClusterId(null));
+        unlabeledSamples.forEach(sample -> sample.setClusterId(null));
+
         return clusters;
 
     }
@@ -196,6 +198,7 @@ public final class MCIKMeans {
                     } else {
                         clusterById.get(sample.getClusterId()).removeUnlabeledSample(sample);
                     }
+                    sample.setClusterId(null);
                 }
 
                 ImpurityBasedCluster chosenCluster = clusters.get(0);
@@ -212,6 +215,7 @@ public final class MCIKMeans {
                 } else {
                     chosenCluster.addUnlabeledSample(sample);
                 }
+                sample.setClusterId(chosenCluster.getId());
 
                 chosenCluster.updateEntropy();
 

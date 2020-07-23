@@ -5,9 +5,9 @@ import java.util.stream.Collectors;
 
 public class DynamicConfusionMatrix {
 
-    private final Set<Integer> lineLabels;
-    private final Set<Integer> knownColumnLabels;
-    private final Set<Integer> novelColumnLabels;
+    private final List<Integer> lineLabels;
+    private final List<Integer> knownColumnLabels;
+    private final List<Integer> novelColumnLabels;
 
     //Number of columns
     private int knownColumnsCount;
@@ -25,9 +25,9 @@ public class DynamicConfusionMatrix {
 
     public DynamicConfusionMatrix() {
 
-        this.lineLabels = new HashSet<>();
-        this.knownColumnLabels = new HashSet<>();
-        this.novelColumnLabels = new HashSet<>();
+        this.lineLabels = new ArrayList<>();
+        this.knownColumnLabels = new ArrayList<>();
+        this.novelColumnLabels = new ArrayList<>();
 
         this.knownColumnsCount = 0;
         this.novelColumnsCount = 0;
@@ -44,9 +44,9 @@ public class DynamicConfusionMatrix {
 
     public DynamicConfusionMatrix(List<Integer> knownLabels) {
 
-        this.lineLabels = new HashSet<>();
-        this.knownColumnLabels = new HashSet<>();
-        this.novelColumnLabels = new HashSet<>();
+        this.lineLabels = new ArrayList<>();
+        this.knownColumnLabels = new ArrayList<>();
+        this.novelColumnLabels = new ArrayList<>();
 
         this.knownColumnsCount = 0;
         this.novelColumnsCount = 0;
@@ -168,36 +168,24 @@ public class DynamicConfusionMatrix {
 
         final int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 2];
 
-        final List<Integer> sortedKnownColumnLabels = this.knownColumnLabels.stream()
-                .sorted()
-                .collect(Collectors.toList());
-
-        final List<Integer> sortedNovelColumnLabels = this.novelColumnLabels.stream()
-                .sorted()
-                .collect(Collectors.toList());
-
-        final List<Integer> sortedLineLabels = this.lineLabels.stream()
-                .sorted()
-                .collect(Collectors.toList());
-
-        for (int i = 0; i < sortedKnownColumnLabels.size(); ++i) {
-            matrix[0][i + 1] = sortedKnownColumnLabels.get(i);
+        for (int i = 0; i < this.knownColumnLabels.size(); ++i) {
+            matrix[0][i + 1] = this.knownColumnLabels.get(i);
         }
 
-        for (int i = 0; i < sortedNovelColumnLabels.size(); ++i) {
-            matrix[0][i + sortedKnownColumnLabels.size() + 1] = sortedNovelColumnLabels.get(i);
+        for (int i = 0; i < this.novelColumnLabels.size(); ++i) {
+            matrix[0][i + this.knownColumnLabels.size() + 1] = this.novelColumnLabels.get(i);
         }
 
-        for (int i = 0; i < sortedLineLabels.size(); ++i) {
-            matrix[i + 1][0] = sortedLineLabels.get(i);
+        for (int i = 0; i < this.lineLabels.size(); ++i) {
+            matrix[i + 1][0] = this.lineLabels.get(i);
         }
 
 
         for (int i = 0; i < this.lineLabels.size(); ++i) {
             for (int j = 0; j < this.knownColumnsCount; ++j) {
 
-                final int line = sortedLineLabels.get(i);
-                final int column = sortedKnownColumnLabels.get(j);
+                final int line = this.lineLabels.get(i);
+                final int column = this.knownColumnLabels.get(j);
 
                 final int lineIndex = this.lineIndexByLabel.get(line);
                 final int columnIndex = this.knownColumnIndexByLabel.get(column);
@@ -213,8 +201,8 @@ public class DynamicConfusionMatrix {
         for (int i = 0; i < this.lineLabels.size(); ++i) {
             for (int j = 0; j < this.novelColumnsCount; ++j) {
 
-                final int line = sortedLineLabels.get(i);
-                final int column = sortedNovelColumnLabels.get(j);
+                final int line = this.lineLabels.get(i);
+                final int column = this.novelColumnLabels.get(j);
 
                 final int lineIndex = this.lineIndexByLabel.get(line);
                 final int columnIndex = this.novelColumnIndexByLabel.get(column);
@@ -420,7 +408,7 @@ public class DynamicConfusionMatrix {
 
             final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
 
-            if (numberOfExplainedSamples == 0) {
+            if (numberOfExplainedSamples == 0 || (fp + tn(lineLabel, association) == 0)  || (fn + tp(lineLabel, association) == 0)) {
 
                 return 0.0;
 

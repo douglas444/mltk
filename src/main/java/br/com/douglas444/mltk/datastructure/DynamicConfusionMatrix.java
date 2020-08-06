@@ -63,12 +63,14 @@ public class DynamicConfusionMatrix {
     }
 
     public boolean isLabelKnown(final Integer label) {
-        return this.lineLabels.contains(label);
+        return this.knownColumnLabels.contains(label);
     }
 
     public void addKnownLabel(final Integer label) {
         this.addKnownColumn(label);
-        this.addLine(label);
+        if (!this.lineLabels.contains(label)) {
+            this.addLine(label);
+        }
     }
 
     private void addLine(final Integer label) {
@@ -150,8 +152,7 @@ public class DynamicConfusionMatrix {
         } else {
 
             if (!this.knownColumnIndexByLabel.containsKey(predictedLabel)) {
-
-                throw new RuntimeException("Predicted label is not known");
+                throw new IllegalArgumentException("Predicted label is not known");
 
             }
 
@@ -166,14 +167,17 @@ public class DynamicConfusionMatrix {
     @Override
     public String toString() {
 
+        final List<Integer> sortedKnownColumnLabels = new ArrayList<>(this.knownColumnLabels);
+        sortedKnownColumnLabels.sort(Comparator.comparingInt(lineLabels::indexOf));
+
         final int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 2];
 
-        for (int i = 0; i < this.knownColumnLabels.size(); ++i) {
-            matrix[0][i + 1] = this.knownColumnLabels.get(i);
+        for (int i = 0; i < sortedKnownColumnLabels.size(); ++i) {
+            matrix[0][i + 1] = sortedKnownColumnLabels.get(i);
         }
 
         for (int i = 0; i < this.novelColumnLabels.size(); ++i) {
-            matrix[0][i + this.knownColumnLabels.size() + 1] = this.novelColumnLabels.get(i);
+            matrix[0][i + sortedKnownColumnLabels.size() + 1] = this.novelColumnLabels.get(i);
         }
 
         for (int i = 0; i < this.lineLabels.size(); ++i) {
@@ -185,7 +189,7 @@ public class DynamicConfusionMatrix {
             for (int j = 0; j < this.knownColumnsCount; ++j) {
 
                 final int line = this.lineLabels.get(i);
-                final int column = this.knownColumnLabels.get(j);
+                final int column = sortedKnownColumnLabels.get(j);
 
                 final int lineIndex = this.lineIndexByLabel.get(line);
                 final int columnIndex = this.knownColumnIndexByLabel.get(column);
@@ -341,7 +345,7 @@ public class DynamicConfusionMatrix {
 
             sum += this.knownColumnLabels.stream()
                     .filter(columnLabel -> columnLabel != label)
-                    .map(this.lineIndexByLabel::get)
+                    .map(this.knownColumnIndexByLabel::get)
                     .map(columnIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
                     .reduce(0, Integer::sum);
 

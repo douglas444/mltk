@@ -1,62 +1,61 @@
 package br.com.douglas444.mltk.datastructure;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class DynamicConfusionMatrix {
 
-    private final List<Integer> lineLabels;
+    private final List<Integer> rowLabels;
     private final List<Integer> knownColumnLabels;
-    private final List<Integer> novelColumnLabels;
+    private final List<Integer> noveltyColumnLabels;
 
     //Number of columns
     private int knownColumnsCount;
-    private int novelColumnsCount;
+    private int noveltyColumnsCount;
 
     //Indices for matrix access
     private final HashMap<Integer, Integer> knownColumnIndexByLabel;
-    private final HashMap<Integer, Integer> novelColumnIndexByLabel;
-    private final HashMap<Integer, Integer> lineIndexByLabel;
+    private final HashMap<Integer, Integer> noveltyColumnIndexByLabel;
+    private final HashMap<Integer, Integer> rowIndexByLabel;
 
     //Matrix
     private final List<List<Integer>> knownColumnsMatrix;
-    private final List<List<Integer>> novelColumnsMatrix;
+    private final List<List<Integer>> noveltyColumnsMatrix;
     private final List<Integer> unknownColumn;
 
     public DynamicConfusionMatrix() {
 
-        this.lineLabels = new ArrayList<>();
+        this.rowLabels = new ArrayList<>();
         this.knownColumnLabels = new ArrayList<>();
-        this.novelColumnLabels = new ArrayList<>();
+        this.noveltyColumnLabels = new ArrayList<>();
 
         this.knownColumnsCount = 0;
-        this.novelColumnsCount = 0;
+        this.noveltyColumnsCount = 0;
 
         this.knownColumnIndexByLabel = new HashMap<>();
-        this.novelColumnIndexByLabel = new HashMap<>();
-        this.lineIndexByLabel = new HashMap<>();
+        this.noveltyColumnIndexByLabel = new HashMap<>();
+        this.rowIndexByLabel = new HashMap<>();
 
         this.knownColumnsMatrix = new ArrayList<>();
-        this.novelColumnsMatrix = new ArrayList<>();
+        this.noveltyColumnsMatrix = new ArrayList<>();
         this.unknownColumn = new ArrayList<>();
 
     }
 
     public DynamicConfusionMatrix(List<Integer> knownLabels) {
 
-        this.lineLabels = new ArrayList<>();
+        this.rowLabels = new ArrayList<>();
         this.knownColumnLabels = new ArrayList<>();
-        this.novelColumnLabels = new ArrayList<>();
+        this.noveltyColumnLabels = new ArrayList<>();
 
         this.knownColumnsCount = 0;
-        this.novelColumnsCount = 0;
+        this.noveltyColumnsCount = 0;
 
         this.knownColumnIndexByLabel = new HashMap<>();
-        this.novelColumnIndexByLabel = new HashMap<>();
-        this.lineIndexByLabel = new HashMap<>();
+        this.noveltyColumnIndexByLabel = new HashMap<>();
+        this.rowIndexByLabel = new HashMap<>();
 
         this.knownColumnsMatrix = new ArrayList<>();
-        this.novelColumnsMatrix = new ArrayList<>();
+        this.noveltyColumnsMatrix = new ArrayList<>();
         this.unknownColumn = new ArrayList<>();
 
         knownLabels.forEach(this::addKnownLabel);
@@ -68,16 +67,16 @@ public class DynamicConfusionMatrix {
 
     public void addKnownLabel(final Integer label) {
         this.addKnownColumn(label);
-        if (!this.lineLabels.contains(label)) {
-            this.addLine(label);
+        if (!this.rowLabels.contains(label)) {
+            this.addRow(label);
         }
     }
 
-    private void addLine(final Integer label) {
-        this.lineIndexByLabel.put(label, lineLabels.size());
-        this.lineLabels.add(label);
+    private void addRow(final Integer label) {
+        this.rowIndexByLabel.put(label, rowLabels.size());
+        this.rowLabels.add(label);
         this.knownColumnsMatrix.add(new ArrayList<>(Collections.nCopies(knownColumnsCount, 0)));
-        this.novelColumnsMatrix.add(new ArrayList<>(Collections.nCopies(novelColumnsCount, 0)));
+        this.noveltyColumnsMatrix.add(new ArrayList<>(Collections.nCopies(noveltyColumnsCount, 0)));
         this.unknownColumn.add(0);
 
     }
@@ -86,29 +85,29 @@ public class DynamicConfusionMatrix {
 
         this.knownColumnLabels.add(label);
         this.knownColumnIndexByLabel.put(label, this.knownColumnsCount++);
-        this.knownColumnsMatrix.forEach(line -> line.add(0));
+        this.knownColumnsMatrix.forEach(row -> row.add(0));
 
     }
 
-    private void addNovelColumn(final Integer label) {
+    private void addNoveltyColumn(final Integer label) {
 
-        this.novelColumnLabels.add(label);
-        this.novelColumnIndexByLabel.put(label, this.novelColumnsCount++);
-        this.novelColumnsMatrix.forEach(line -> line.add(0));
+        this.noveltyColumnLabels.add(label);
+        this.noveltyColumnIndexByLabel.put(label, this.noveltyColumnsCount++);
+        this.noveltyColumnsMatrix.forEach(row -> row.add(0));
 
     }
 
     public void updatedDelayed(final int realLabel, final int predictedLabel, final boolean isNovel) {
 
-        if (!this.lineLabels.contains(realLabel)) {
+        if (!this.rowLabels.contains(realLabel)) {
 
             throw new RuntimeException("Invalid value for parameter realLabel");
 
         }
 
-        final int lineIndex = this.lineIndexByLabel.get(realLabel);
-        final int value = this.unknownColumn.get(lineIndex);
-        this.unknownColumn.set(lineIndex, value - 1);
+        final int rowIndex = this.rowIndexByLabel.get(realLabel);
+        final int value = this.unknownColumn.get(rowIndex);
+        this.unknownColumn.set(rowIndex, value - 1);
 
         this.addPrediction(realLabel, predictedLabel, isNovel);
 
@@ -116,38 +115,38 @@ public class DynamicConfusionMatrix {
 
     public void addUnknown(final int realLabel) {
 
-        if (!this.lineLabels.contains(realLabel)) {
+        if (!this.rowLabels.contains(realLabel)) {
 
-            this.addLine(realLabel);
+            this.addRow(realLabel);
 
         }
 
-        final int lineIndex = this.lineIndexByLabel.get(realLabel);
-        final int value = this.unknownColumn.get(lineIndex);
-        this.unknownColumn.set(lineIndex, value + 1);
+        final int rowIndex = this.rowIndexByLabel.get(realLabel);
+        final int value = this.unknownColumn.get(rowIndex);
+        this.unknownColumn.set(rowIndex, value + 1);
 
     }
 
     public void addPrediction(final int realLabel, final int predictedLabel, final boolean isNovel) {
 
 
-        if (!this.lineLabels.contains(realLabel)) {
+        if (!this.rowLabels.contains(realLabel)) {
 
-            this.addLine(realLabel);
+            this.addRow(realLabel);
 
         }
 
-        final int lineIndex = this.lineIndexByLabel.get(realLabel);
+        final int rowIndex = this.rowIndexByLabel.get(realLabel);
 
         if (isNovel) {
 
-            if (!this.novelColumnLabels.contains(predictedLabel)) {
-                this.addNovelColumn(predictedLabel);
+            if (!this.noveltyColumnLabels.contains(predictedLabel)) {
+                this.addNoveltyColumn(predictedLabel);
             }
 
-            final int columnIndex = this.novelColumnIndexByLabel.get(predictedLabel);
-            final int count = this.novelColumnsMatrix.get(lineIndex).get(columnIndex);
-            this.novelColumnsMatrix.get(lineIndex).set(columnIndex, count + 1);
+            final int columnIndex = this.noveltyColumnIndexByLabel.get(predictedLabel);
+            final int count = this.noveltyColumnsMatrix.get(rowIndex).get(columnIndex);
+            this.noveltyColumnsMatrix.get(rowIndex).set(columnIndex, count + 1);
 
         } else {
 
@@ -157,8 +156,8 @@ public class DynamicConfusionMatrix {
             }
 
             final int columnIndex = this.knownColumnIndexByLabel.get(predictedLabel);
-            final int count = this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
-            this.knownColumnsMatrix.get(lineIndex).set(columnIndex, count + 1);
+            final int count = this.knownColumnsMatrix.get(rowIndex).get(columnIndex);
+            this.knownColumnsMatrix.get(rowIndex).set(columnIndex, count + 1);
 
         }
 
@@ -168,51 +167,51 @@ public class DynamicConfusionMatrix {
     public String toString() {
 
         final List<Integer> sortedKnownColumnLabels = new ArrayList<>(this.knownColumnLabels);
-        sortedKnownColumnLabels.sort(Comparator.comparingInt(lineLabels::indexOf));
+        sortedKnownColumnLabels.sort(Comparator.comparingInt(rowLabels::indexOf));
 
-        final int[][] matrix = new int[this.lineLabels.size() + 1][this.knownColumnsCount + this.novelColumnsCount + 2];
+        final int[][] matrix = new int[this.rowLabels.size() + 1][this.knownColumnsCount + this.noveltyColumnsCount + 2];
 
         for (int i = 0; i < sortedKnownColumnLabels.size(); ++i) {
             matrix[0][i + 1] = sortedKnownColumnLabels.get(i);
         }
 
-        for (int i = 0; i < this.novelColumnLabels.size(); ++i) {
-            matrix[0][i + sortedKnownColumnLabels.size() + 1] = this.novelColumnLabels.get(i);
+        for (int i = 0; i < this.noveltyColumnLabels.size(); ++i) {
+            matrix[0][i + sortedKnownColumnLabels.size() + 1] = this.noveltyColumnLabels.get(i);
         }
 
-        for (int i = 0; i < this.lineLabels.size(); ++i) {
-            matrix[i + 1][0] = this.lineLabels.get(i);
+        for (int i = 0; i < this.rowLabels.size(); ++i) {
+            matrix[i + 1][0] = this.rowLabels.get(i);
         }
 
 
-        for (int i = 0; i < this.lineLabels.size(); ++i) {
+        for (int i = 0; i < this.rowLabels.size(); ++i) {
             for (int j = 0; j < this.knownColumnsCount; ++j) {
 
-                final int line = this.lineLabels.get(i);
+                final int row = this.rowLabels.get(i);
                 final int column = sortedKnownColumnLabels.get(j);
 
-                final int lineIndex = this.lineIndexByLabel.get(line);
+                final int rowIndex = this.rowIndexByLabel.get(row);
                 final int columnIndex = this.knownColumnIndexByLabel.get(column);
 
-                matrix[i + 1][j + 1] = this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
+                matrix[i + 1][j + 1] = this.knownColumnsMatrix.get(rowIndex).get(columnIndex);
             }
         }
 
         for (int i = 0; i < this.unknownColumn.size(); ++i) {
-            matrix[i + 1][this.knownColumnsCount + this.novelColumnsCount + 1] = this.unknownColumn.get(i);
+            matrix[i + 1][this.knownColumnsCount + this.noveltyColumnsCount + 1] = this.unknownColumn.get(i);
         }
 
-        for (int i = 0; i < this.lineLabels.size(); ++i) {
-            for (int j = 0; j < this.novelColumnsCount; ++j) {
+        for (int i = 0; i < this.rowLabels.size(); ++i) {
+            for (int j = 0; j < this.noveltyColumnsCount; ++j) {
 
-                final int line = this.lineLabels.get(i);
-                final int column = this.novelColumnLabels.get(j);
+                final int row = this.rowLabels.get(i);
+                final int column = this.noveltyColumnLabels.get(j);
 
-                final int lineIndex = this.lineIndexByLabel.get(line);
-                final int columnIndex = this.novelColumnIndexByLabel.get(column);
+                final int rowIndex = this.rowIndexByLabel.get(row);
+                final int columnIndex = this.noveltyColumnIndexByLabel.get(column);
 
                 matrix[i + 1][j + this.knownColumnsCount + 1] =
-                        this.novelColumnsMatrix.get(lineIndex).get(columnIndex);
+                        this.noveltyColumnsMatrix.get(rowIndex).get(columnIndex);
             }
 
         }
@@ -222,8 +221,8 @@ public class DynamicConfusionMatrix {
             for (int j = 0; j < matrix[0].length; ++j) {
                 if (i == 0 && j == 0) {
                     stringBuilder.append(String.format("   %6s", ""));
-                } else if (i == 0 && j > this.knownColumnsCount && j < this.knownColumnsCount + this.novelColumnsCount + 1) {
-                    stringBuilder.append(String.format("|PN%6d", this.novelColumnIndexByLabel.get(matrix[i][j])));
+                } else if (i == 0 && j > this.knownColumnsCount && j < this.knownColumnsCount + this.noveltyColumnsCount + 1) {
+                    stringBuilder.append(String.format("|PN%6d", this.noveltyColumnIndexByLabel.get(matrix[i][j])));
                 } else if (i == 0 && j > this.knownColumnsCount) {
                     stringBuilder.append(String.format("|%1sUNKNOWN", ""));
                 } else if (j == 0 && i > this.knownColumnsCount){
@@ -240,64 +239,65 @@ public class DynamicConfusionMatrix {
         return stringBuilder.toString();
     }
 
-    public HashMap<Integer, List<Integer>> pnAssociation() {
+    public HashMap<Integer, List<Integer>> calculateNoveltyAssociationByRow() {
 
-        final HashMap<Integer, List<Integer>> association = new HashMap<>();
+        final HashMap<Integer, List<Integer>> noveltyAssociationByRow = new HashMap<>();
 
-        for (Integer novelColumnLabel: this.novelColumnLabels) {
+        for (Integer noveltyColumnLabel: this.noveltyColumnLabels) {
 
             int max = 0;
             int label = -1;
 
-            for (Integer lineLabel: this.lineLabels) {
-                final int line = this.lineIndexByLabel.get(lineLabel);
-                final int column = this.novelColumnIndexByLabel.get(novelColumnLabel);
-                if (this.novelColumnsMatrix.get(line).get(column) > max) {
-                    max = this.novelColumnsMatrix.get(line).get(column);
-                    label = lineLabel;
+            for (Integer rowLabel: this.rowLabels) {
+                final int row = this.rowIndexByLabel.get(rowLabel);
+                final int column = this.noveltyColumnIndexByLabel.get(noveltyColumnLabel);
+                if (this.noveltyColumnsMatrix.get(row).get(column) > max) {
+                    max = this.noveltyColumnsMatrix.get(row).get(column);
+                    label = rowLabel;
                 }
             }
 
             if (label != -1) {
-                List<Integer> pns;
-                if ((pns = association.get(label)) != null) {
-                    pns.add(novelColumnLabel);
+                List<Integer> novelties;
+                if ((novelties = noveltyAssociationByRow.get(label)) != null) {
+                    novelties.add(noveltyColumnLabel);
                 } else {
-                    pns = new ArrayList<>();
-                    pns.add(novelColumnLabel);
-                    association.put(label, pns);
+                    novelties = new ArrayList<>();
+                    novelties.add(noveltyColumnLabel);
+                    noveltyAssociationByRow.put(label, novelties);
                 }
             }
         }
 
-        return association;
+        return noveltyAssociationByRow;
 
     }
 
-    public int tp(final int label, final HashMap<Integer, List<Integer>> association) {
+    public int measureTP(final int label, final HashMap<Integer, List<Integer>> noveltyAssociationByRow) {
 
         int sum = 0;
-        final int lineIndex = this.lineIndexByLabel.get(label);
+        final int rowIndex = this.rowIndexByLabel.get(label);
 
         if (this.knownColumnLabels.contains(label)) {
             final int columnIndex = this.knownColumnIndexByLabel.get(label);
-            sum += this.knownColumnsMatrix.get(lineIndex).get(columnIndex);
+            sum += this.knownColumnsMatrix.get(rowIndex).get(columnIndex);
         }
 
-        final List<Integer> pns = association.get(label);
-        if (pns == null) {
+        final List<Integer> novelties = noveltyAssociationByRow.get(label);
+        if (novelties == null) {
             return sum;
         }
 
-        sum += pns.stream()
-                .map(pn -> this.novelColumnsMatrix.get(lineIndex).get(pn))
+        sum += novelties.stream()
+                .map(this.noveltyColumnIndexByLabel::get)
+                .map(noveltyIndex -> this.noveltyColumnsMatrix.get(rowIndex).get(noveltyIndex))
                 .reduce(0,  Integer::sum);
 
         return sum;
 
     }
 
-    public int fp(final int label, final HashMap<Integer, List<Integer>> association) {
+    public int measureFP(final int label, final HashMap<Integer, List<Integer>> noveltyAssociationByRow) {
 
         int sum = 0;
 
@@ -305,26 +305,27 @@ public class DynamicConfusionMatrix {
 
             final int columnIndex = this.knownColumnIndexByLabel.get(label);
 
-            sum += this.lineLabels.stream()
-                    .filter(lineLabel -> lineLabel != label)
-                    .map(this.lineIndexByLabel::get)
-                    .map(lineIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
+            sum += this.rowLabels.stream()
+                    .filter(rowLabel -> rowLabel != label)
+                    .map(this.rowIndexByLabel::get)
+                    .map(rowIndex -> this.knownColumnsMatrix.get(rowIndex).get(columnIndex))
                     .reduce(0, Integer::sum);
 
         }
 
-        final List<Integer> pns = association.get(label);
-        if (pns == null) {
+        final List<Integer> novelties = noveltyAssociationByRow.get(label);
+        if (novelties == null) {
             return sum;
         }
 
-        sum += pns.stream()
-                .map(pn ->
+        sum += novelties.stream()
+                .map(this.noveltyColumnIndexByLabel::get)
+                .map(noveltyIndex ->
 
-                    this.lineLabels.stream()
-                            .filter(lineLabel -> lineLabel != label)
-                            .map(this.lineIndexByLabel::get)
-                            .map(lineIndex -> this.novelColumnsMatrix.get(lineIndex).get(pn))
+                    this.rowLabels.stream()
+                            .filter(rowLabel -> rowLabel != label)
+                            .map(this.rowIndexByLabel::get)
+                            .map(rowIndex -> this.noveltyColumnsMatrix.get(rowIndex).get(noveltyIndex))
                             .reduce(0, Integer::sum)
 
                 )
@@ -334,56 +335,55 @@ public class DynamicConfusionMatrix {
 
     }
 
-    public int fn(final int label, final HashMap<Integer, List<Integer>> association) {
+    public int measureFN(final int label, final HashMap<Integer, List<Integer>> noveltyAssociationByRow) {
 
         int sum = 0;
 
-        final int lineIndex = this.lineIndexByLabel.get(label);
+        final int rowIndex = this.rowIndexByLabel.get(label);
 
         if (this.knownColumnLabels.contains(label)) {
-
 
             sum += this.knownColumnLabels.stream()
                     .filter(columnLabel -> columnLabel != label)
                     .map(this.knownColumnIndexByLabel::get)
-                    .map(columnIndex -> this.knownColumnsMatrix.get(lineIndex).get(columnIndex))
+                    .map(columnIndex -> this.knownColumnsMatrix.get(rowIndex).get(columnIndex))
                     .reduce(0, Integer::sum);
 
         }
 
-        final List<Integer> pns = association.get(label);
-        if (pns == null) {
+        final List<Integer> novelties = noveltyAssociationByRow.get(label);
+        if (novelties == null) {
             return sum;
         }
 
-        sum += this.novelColumnLabels.stream()
-                .filter(columnLabel -> !pns.contains(columnLabel))
-                .map(this.novelColumnIndexByLabel::get)
-                .map(columnIndex -> this.novelColumnsMatrix.get(lineIndex).get(columnIndex))
+        sum += this.noveltyColumnLabels.stream()
+                .filter(columnLabel -> !novelties.contains(columnLabel))
+                .map(this.noveltyColumnIndexByLabel::get)
+                .map(columnIndex -> this.noveltyColumnsMatrix.get(rowIndex).get(columnIndex))
                 .reduce(0, Integer::sum);
 
         return sum;
     }
 
 
-    public int tn(final int label, final HashMap<Integer, List<Integer>> association) {
+    public int measureTN(final int label, final HashMap<Integer, List<Integer>> noveltyAssociationByRow) {
 
-        return this.lineLabels.stream()
-                .filter(lineLabel -> lineLabel != label)
-                .map(lineLabel -> this.tp(lineLabel, association))
+        return this.rowLabels.stream()
+                .filter(rowLabel -> rowLabel != label)
+                .map(rowLabel -> this.measureTP(rowLabel, noveltyAssociationByRow))
                 .reduce(0, Integer::sum);
 
     }
 
     public int numberOfExplainedSamplesPerLabel(final int label) {
 
-        final int lineIndex = lineIndexByLabel.get(label);
+        final int rowIndex = this.rowIndexByLabel.get(label);
 
-        int sum = knownColumnsMatrix.get(lineIndex)
+        int sum = this.knownColumnsMatrix.get(rowIndex)
                 .stream()
                 .reduce(0, Integer::sum);
 
-        sum += novelColumnsMatrix.get(lineIndex)
+        sum += this.noveltyColumnsMatrix.get(rowIndex)
                 .stream()
                 .reduce(0, Integer::sum);
 
@@ -391,53 +391,46 @@ public class DynamicConfusionMatrix {
     }
 
     public int numberOfExplainedSamples() {
-
-
-        return this.lineLabels.stream().map(this::numberOfExplainedSamplesPerLabel).reduce(0, Integer::sum);
-
-
+        return this.rowLabels.stream().map(this::numberOfExplainedSamplesPerLabel).reduce(0, Integer::sum);
     }
 
-    public double cer() {
+    public double measureCER() {
 
         double sum = 0;
+        final int totalExplainedSamples = this.numberOfExplainedSamples();
+        final HashMap<Integer, List<Integer>> association = calculateNoveltyAssociationByRow();
 
-        final int totalExplainedSamples = numberOfExplainedSamples();
-        final HashMap<Integer, List<Integer>> association = pnAssociation();
+        sum += this.rowLabels.stream().map(rowLabel -> {
 
-        sum += this.lineLabels.stream().map(lineLabel -> {
+            final int fp = this.measureFP(rowLabel, association);
+            final int fn = this.measureFN(rowLabel, association);
+            final int tn = this.measureTN(rowLabel, association);
+            final int tp = this.measureTP(rowLabel, association);
 
-            final int fp = this.fp(lineLabel, association);
-            final int fn = this.fn(lineLabel, association);
+            final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(rowLabel);
 
-            final int numberOfExplainedSamples = this.numberOfExplainedSamplesPerLabel(lineLabel);
-
-            if (numberOfExplainedSamples == 0 || (fp + tn(lineLabel, association) == 0)  || (fn + tp(lineLabel, association) == 0)) {
-
+            if (numberOfExplainedSamples == 0) {
                 return 0.0;
-
-            } else {
-
-                return ((double) numberOfExplainedSamples / totalExplainedSamples) *
-                        ((double) fp / (fp + tn(lineLabel, association)))
-
-                        + ((double) numberOfExplainedSamples / totalExplainedSamples) *
-                        ((double) fn / (fn + tp(lineLabel, association)));
-
             }
+
+            final double rate = numberOfExplainedSamples / (double) totalExplainedSamples;
+
+            return rate * (fp / (double) Math.max(1, fp + tn))
+                    + rate * (fn / (double) Math.max(1, fn + tp));
+
 
         }).reduce(0.0, Double::sum);
 
         return sum / 2;
     }
 
-    public double unkR() {
+    public double measureUnkR() {
 
-        return this.lineLabels.stream()
-                .map(lineLabel -> {
+        return this.rowLabels.stream()
+                .map(rowLabel -> {
 
-                    final double unexplained = this.unknownColumn.get(this.lineIndexByLabel.get(lineLabel));
-                    final double explained = this.numberOfExplainedSamplesPerLabel(lineLabel);
+                    final double unexplained = this.unknownColumn.get(this.rowIndexByLabel.get(rowLabel));
+                    final double explained = this.numberOfExplainedSamplesPerLabel(rowLabel);
 
                     if (explained == 0) {
                         if (unexplained == 0) {
@@ -450,7 +443,7 @@ public class DynamicConfusionMatrix {
                     }
 
                 })
-                .reduce(0.0, Double::sum) / this.lineLabels.size();
+                .reduce(0.0, Double::sum) / this.rowLabels.size();
 
     }
 

@@ -446,8 +446,4 @@ public class DynamicConfusionMatrix {
                 .reduce(0.0, Double::sum) / this.rowLabels.size();
 
     }
-
-    public void print() {
-        System.out.println(this.toString());
-    }
 }

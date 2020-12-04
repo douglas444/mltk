@@ -3,7 +3,10 @@ package br.com.douglas444.mltk.clustering.kmeans;
 import br.com.douglas444.mltk.datastructure.Cluster;
 import br.com.douglas444.mltk.datastructure.Sample;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 public final class KMeans {
 

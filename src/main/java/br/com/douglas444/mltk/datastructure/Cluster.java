@@ -1,11 +1,13 @@
 package br.com.douglas444.mltk.datastructure;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Cluster {
 
     private List<Sample> samples;
+    private Sample mostRecentSample;
 
     public Cluster(List<Sample> samples) {
 
@@ -13,32 +15,50 @@ public class Cluster {
             throw new IllegalArgumentException();
         }
 
+        this.mostRecentSample = null;
         this.samples = new ArrayList<>(samples);
     }
 
-    public Sample calculateCenter() {
+    public Sample calculateCentroid() {
 
-        final Sample center = this.samples.get(0).copy();
+        final Sample centroid = this.samples.get(0).copy();
 
-        if (samples.size() > 1) {
-            this.samples.subList(1, this.samples.size()).forEach(center::sum);
+        if (this.samples.size() > 1) {
+            this.samples.subList(1, this.samples.size()).forEach(centroid::sum);
         }
 
-        center.divide(this.samples.size());
-        return center;
+        centroid.divide(this.samples.size());
+        return centroid;
 
     }
 
     public double calculateStandardDeviation() {
 
-        final Sample center = this.calculateCenter();
+        final Sample centroid = this.calculateCentroid();
 
         final double sum = this.samples
                 .stream()
-                .mapToDouble(sample -> Math.pow(sample.distance(center), 2))
+                .mapToDouble(sample -> Math.pow(sample.distance(centroid), 2))
                 .sum();
 
         return Math.sqrt(sum / this.samples.size());
+    }
+
+    public Sample getMostRecentSample() {
+
+        if (this.samples.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+
+        if (this.mostRecentSample == null) {
+            this.mostRecentSample = this.samples
+                    .stream()
+                    .min(Comparator.comparing(Sample::getT))
+                    .orElse(this.getSamples().get(0));
+        }
+
+        return mostRecentSample;
+
     }
 
     public int getSize() {
@@ -51,8 +71,5 @@ public class Cluster {
         return samples;
     }
 
-    public void setSamples(List<Sample> samples) {
-        this.samples = samples;
-    }
 
 }
